@@ -1,0 +1,28 @@
+{
+  "name": "kavach",
+  "private": true,
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "depcruise": "depcruise apps packages --config packages/config/dependency-cruiser.cjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d --wait",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "db:generate": "pnpm --filter @kavach/db generate",
+    "db:migrate": "pnpm --filter @kavach/db migrate"
+  },
+  "devDependencies": {
+    "dependency-cruiser": "^18.0.0",
+    "prettier": "^3.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "catalog:"
+  }
+}

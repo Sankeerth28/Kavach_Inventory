@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "KAVACH",
+    "slug": "kavach",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "kavach",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kavachtechnologies.kavach"
+    },
+    "android": {
+      "package": "com.kavachtechnologies.kavach"
+    }
+  }
+}

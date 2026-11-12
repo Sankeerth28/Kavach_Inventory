@@ -1,0 +1,26 @@
+{
+  "name": "@kavach/worker",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@kavach/shared": "workspace:*",
+    "bullmq": "^6.0.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@kavach/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "tsx": "^4.20.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

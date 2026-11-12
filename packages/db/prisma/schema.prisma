@@ -1,0 +1,12 @@
+// KAVACH database schema. The full model set is specified in docs/ARCHITECTURE.md §4.3 and is
+// added slice by slice, one migration per feature (CLAUDE.md "How to work in this repo").
+// Never edit an applied migration; create a new one.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
