@@ -20,3 +20,6 @@ allowBuilds:
   esbuild: true
   '@parcel/watcher': false
   msgpackr-extract: false
+
+# Fail fast on the wrong Node version (see "engines" in package.json and .nvmrc).
+engineStrict: true
