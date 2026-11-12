@@ -88,9 +88,8 @@ export async function createFixture(app: INestApplication): Promise<Fixture> {
 /** HTTP client acting as `actor` inside `projectId`. */
 export function as(app: INestApplication, actor: Pick<Actor, 'token'>, projectId?: string) {
   const call = (method: 'get' | 'post' | 'patch', url: string, body?: object) => {
-    let req = request(app.getHttpServer())
-      [method](url)
-      .set('Authorization', `Bearer ${actor.token}`);
+    const agent = request(app.getHttpServer());
+    let req = agent[method](url).set('Authorization', `Bearer ${actor.token}`);
     if (projectId) req = req.set('X-Project-Id', projectId);
     return body === undefined ? req : req.send(body);
   };

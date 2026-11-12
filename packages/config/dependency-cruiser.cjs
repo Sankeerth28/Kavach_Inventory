@@ -49,6 +49,13 @@ module.exports = {
       to: { path: '^(apps|packages/(matching|api-client|ai-eval))/' },
     },
     {
+      name: 'api-client-imports-only-shared',
+      comment: 'The typed client runs in browsers and on phones: no server code.',
+      severity: 'error',
+      from: { path: '^packages/api-client/' },
+      to: { path: '^(apps|packages/(db|matching|ai-eval))/' },
+    },
+    {
       name: 'clients-never-import-server-packages',
       comment: 'web and mobile talk to the API; they never touch the DB or matching engine.',
       severity: 'error',

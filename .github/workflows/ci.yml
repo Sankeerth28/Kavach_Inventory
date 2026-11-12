@@ -13,6 +13,25 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # API integration tests run against a real PostgreSQL (apps/api/test/global-setup.ts).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kavach
+          POSTGRES_PASSWORD: kavach
+          POSTGRES_DB: kavach
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kavach"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # Throwaway CI-only values.
+      TEST_DATABASE_URL: postgresql://kavach:kavach@localhost:5432/kavach?schema=public
+      DATABASE_URL: postgresql://kavach:kavach@localhost:5432/kavach?schema=public
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

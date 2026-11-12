@@ -1,6 +1,7 @@
 import { parseArgs } from 'node:util';
-import { addMember, createPrismaClient, createProject, syncSystemData } from '@kavach/db';
+import { Prisma, addMember, createPrismaClient, createProject, syncSystemData } from '@kavach/db';
 import { EmailSchema, PasswordSchema, PhoneSchema } from '@kavach/shared';
+import { ZodError } from 'zod';
 import { hashPassword } from '../common/auth/password.service';
 
 /**
@@ -98,6 +99,9 @@ async function main(): Promise<void> {
 }
 
 main().catch((e: unknown) => {
-  console.error(e instanceof Error ? e.message : e);
+  if (e instanceof ZodError) console.error(e.issues.map((i) => i.message).join('; '));
+  else if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+    console.error('A project with this code already exists.');
+  } else console.error(e instanceof Error ? e.message : e);
   process.exit(1);
 });
