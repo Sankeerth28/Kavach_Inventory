@@ -17,7 +17,10 @@
     "infra:up": "docker compose -f infra/docker-compose.yml up -d --wait",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "db:generate": "pnpm --filter @kavach/db generate",
-    "db:migrate": "pnpm --filter @kavach/db migrate"
+    "db:migrate": "pnpm --filter @kavach/db migrate",
+    "db:seed": "turbo run build --filter=@kavach/db && pnpm --filter @kavach/api seed",
+    "project:create": "pnpm --filter @kavach/api project:create",
+    "db:deploy": "pnpm --filter @kavach/db migrate:deploy"
   },
   "devDependencies": {
     "dependency-cruiser": "^18.0.0",

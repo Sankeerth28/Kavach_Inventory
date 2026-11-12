@@ -1,6 +1,9 @@
 // KAVACH database schema. The full model set is specified in docs/ARCHITECTURE.md §4.3 and is
 // added slice by slice, one migration per feature (CLAUDE.md "How to work in this repo").
 // Never edit an applied migration; create a new one.
+//
+// Phase 1 (Foundation): identity & access, project structure, master data, audit, sequences.
+// Relations to tables of later phases (ledger, invoices, suppliers) are added with those tables.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,4 +12,426 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum MemberStatus {
+  ACTIVE
+  REMOVED
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum LocationType {
+  TOWER
+  BLOCK
+  FLOOR
+  WORK_AREA
+  OTHER
+}
+
+enum UnitDimension {
+  COUNT
+  MASS
+  LENGTH
+  VOLUME
+  AREA
+}
+
+enum MaterialStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CreationSource {
+  MANUAL
+  AI_INVOICE
+  QUICK_RECEIVE
+  SEED
+}
+
+enum ActorType {
+  USER
+  SYSTEM
+  WORKER
+}
+
+enum SequenceScope {
+  MATERIAL
+  RECEIPT
+  ISSUE
+  RETURN
+  ADJUSTMENT
+  REVERSAL
+  TRANSACTION
+}
+
+// ─────────────────────── Identity & access ───────────────────────
+
+/// A user logs in with an e-mail or a mobile number (DECISIONS Q36). CHECK (raw SQL): at least one.
+model User {
+  id                 String     @id @default(uuid()) @db.Uuid
+  email              String?    @unique // stored lower-cased
+  phone              String?    @unique // digits only
+  name               String
+  passwordHash       String     @map("password_hash") // argon2id
+  mustChangePassword Boolean    @default(false) @map("must_change_password")
+  status             UserStatus @default(ACTIVE)
+  lastLoginAt        DateTime?  @map("last_login_at") @db.Timestamptz(3)
+  createdById        String?    @map("created_by_id") @db.Uuid
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  createdBy            User?           @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers         User[]          @relation("UserCreatedBy")
+  memberships          ProjectMember[]
+  refreshTokens        RefreshToken[]
+  materialsCreated     Material[]      @relation("MaterialCreatedBy")
+  materialsDeactivated Material[]      @relation("MaterialDeactivatedBy")
+  auditLogs            AuditLog[]      @relation("AuditActor")
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash") // sha256 of the opaque token
+  familyId  String    @map("family_id") @db.Uuid // rotation family; reuse ⇒ revoke the family
+  userAgent String?   @map("user_agent")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+model Role {
+  id       String  @id @default(uuid()) @db.Uuid
+  code     String  @unique // PROJECT_ADMIN | STORE_MANAGER
+  name     String
+  isSystem Boolean @default(true) @map("is_system")
+
+  permissions RolePermission[]
+  members     ProjectMember[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String @id @default(uuid()) @db.Uuid
+  code        String @unique // e.g. "material_in:create"
+  module      String
+  description String
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Project {
+  id        String        @id @default(uuid()) @db.Uuid
+  code      String        @unique
+  name      String
+  address   String?
+  timezone  String        @default("Asia/Kolkata")
+  status    ProjectStatus @default(ACTIVE)
+  settings  Json          @default("{}")
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  members         ProjectMember[]
+  stores          Store[]
+  locations       Location[]
+  categories      MaterialCategory[]
+  units           Unit[]
+  unitConversions UnitConversion[]
+  materials       Material[]
+  auditLogs       AuditLog[]
+  sequences       IdSequence[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String       @id @default(uuid()) @db.Uuid
+  projectId String       @map("project_id") @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  roleId    String       @map("role_id") @db.Uuid
+  status    MemberStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  project Project              @relation(fields: [projectId], references: [id])
+  user    User                 @relation(fields: [userId], references: [id])
+  role    Role                 @relation(fields: [roleId], references: [id])
+  stores  ProjectMemberStore[]
+
+  @@unique([projectId, userId]) // one role per user per project
+  @@unique([projectId, id])
+  @@index([userId])
+  @@map("project_members")
+}
+
+/// Which stores a Store Manager operates (DECISIONS Q2). The composite FKs keep the member and
+/// the store in the same project.
+model ProjectMemberStore {
+  projectId String @map("project_id") @db.Uuid
+  memberId  String @map("member_id") @db.Uuid
+  storeId   String @map("store_id") @db.Uuid
+
+  member ProjectMember @relation(fields: [projectId, memberId], references: [projectId, id], onDelete: Cascade)
+  store  Store         @relation(fields: [projectId, storeId], references: [projectId, id])
+
+  @@id([memberId, storeId])
+  @@map("project_member_stores")
+}
+
+// ───────────────────── Project structure ─────────────────────
+
+model Store {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  code      String
+  name      String
+  address   String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  project Project              @relation(fields: [projectId], references: [id])
+  members ProjectMemberStore[]
+
+  @@unique([projectId, code])
+  @@unique([projectId, id])
+  @@map("stores")
+}
+
+/// Issue destinations / return sources: Tower → Floor → Work area (PRD §14.3). Not stock-holding (Q3).
+model Location {
+  id             String       @id @default(uuid()) @db.Uuid
+  projectId      String       @map("project_id") @db.Uuid
+  parentId       String?      @map("parent_id") @db.Uuid
+  name           String
+  normalizedName String       @map("normalized_name")
+  type           LocationType
+  path           String // "Tower A / Floor 3 / Flat 302" for display & search
+  isActive       Boolean      @default(true) @map("is_active")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  project  Project    @relation(fields: [projectId], references: [id])
+  parent   Location?  @relation("LocationTree", fields: [projectId, parentId], references: [projectId, id])
+  children Location[] @relation("LocationTree")
+
+  @@unique([projectId, id])
+  /// NULLS NOT DISTINCT is applied in the constraints migration (Prisma cannot express it).
+  @@unique([projectId, parentId, normalizedName], map: "loc_name_uq")
+  @@index([projectId, parentId])
+  @@map("locations")
+}
+
+// ───────────────────── Master data ─────────────────────
+
+/// parent_id NULL = category; non-NULL = subcategory (PRD §6.2). Project-scoped, seeded from §6.3.
+model MaterialCategory {
+  id             String   @id @default(uuid()) @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  parentId       String?  @map("parent_id") @db.Uuid
+  name           String
+  normalizedName String   @map("normalized_name")
+  isActive       Boolean  @default(true) @map("is_active")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  project              Project            @relation(fields: [projectId], references: [id])
+  parent               MaterialCategory?  @relation("CategoryTree", fields: [projectId, parentId], references: [projectId, id])
+  children             MaterialCategory[] @relation("CategoryTree")
+  materials            Material[]         @relation("MaterialCategory")
+  materialsSubcategory Material[]         @relation("MaterialSubcategory")
+
+  @@unique([projectId, id])
+  /// NULLS NOT DISTINCT is applied in the constraints migration.
+  @@unique([projectId, parentId, normalizedName], map: "cat_name_uq")
+  @@map("material_categories")
+}
+
+/// project_id NULL = system unit (seeded, read-only); non-NULL = project-defined unit (PRD §12.2).
+model Unit {
+  id            String        @id @default(uuid()) @db.Uuid
+  projectId     String?       @map("project_id") @db.Uuid
+  code          String // BAG KG G MT NOS PCS M FT RFT L ROLL BOX BUNDLE CFT CUM
+  name          String
+  symbol        String
+  dimension     UnitDimension
+  decimalPlaces Int           @default(3) @map("decimal_places") // NOS/PCS/BAG = 0 (Q12)
+  aliases       String[] // "BAGS","BGS" for extraction mapping
+  isActive      Boolean       @default(true) @map("is_active")
+
+  project         Project?                @relation(fields: [projectId], references: [id])
+  materialsStock  Material[]              @relation("MaterialStockUnit")
+  materialsPack   Material[]              @relation("MaterialPackUnit")
+  conversionsFrom UnitConversion[]        @relation("ConversionFrom")
+  conversionsTo   UnitConversion[]        @relation("ConversionTo")
+  specs           MaterialSpecification[]
+
+  /// NULLS NOT DISTINCT is applied in the constraints migration, so system codes are unique too.
+  @@unique([projectId, code], map: "units_code_uq")
+  @@map("units")
+}
+
+/// Approved conversions only (PRD §12.4). material_id set ⇒ material-specific. Pack-size conversion
+/// (BAG→KG) is derived from materials.pack_size, not duplicated here.
+model UnitConversion {
+  id         String   @id @default(uuid()) @db.Uuid
+  projectId  String?  @map("project_id") @db.Uuid
+  materialId String?  @map("material_id") @db.Uuid
+  fromUnitId String   @map("from_unit_id") @db.Uuid
+  toUnitId   String   @map("to_unit_id") @db.Uuid
+  factor     Decimal  @db.Decimal(18, 6) // qty_to = qty_from × factor
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  project  Project?  @relation(fields: [projectId], references: [id])
+  material Material? @relation(fields: [materialId], references: [id])
+  fromUnit Unit      @relation("ConversionFrom", fields: [fromUnitId], references: [id])
+  toUnit   Unit      @relation("ConversionTo", fields: [toUnitId], references: [id])
+
+  /// NULLS NOT DISTINCT, CHECK factor > 0 and CHECK from <> to are in the constraints migration.
+  @@unique([projectId, materialId, fromUnitId, toUnitId], map: "conv_uq")
+  @@map("unit_conversions")
+}
+
+model Material {
+  id               String         @id @default(uuid()) @db.Uuid
+  projectId        String         @map("project_id") @db.Uuid
+  code             String // "MAT-000123": the user-facing Material ID (PRD §6.2)
+  name             String
+  normalizedName   String         @map("normalized_name")
+  categoryId       String         @map("category_id") @db.Uuid
+  subcategoryId    String?        @map("subcategory_id") @db.Uuid
+  brand            String?
+  normalizedBrand  String?        @map("normalized_brand")
+  specification    String? // free text; structured attrs in material_specifications
+  grade            String?
+  size             String?
+  stockUnitId      String         @map("stock_unit_id") @db.Uuid // "Primary Unit" (PRD §6.2)
+  packSize         Decimal?       @map("pack_size") @db.Decimal(18, 3) // 50
+  packUnitId       String?        @map("pack_unit_id") @db.Uuid // KG
+  isVariableWeight Boolean        @default(false) @map("is_variable_weight") // PRD §12.4
+  minimumStock     Decimal?       @map("minimum_stock") @db.Decimal(18, 3)
+  description      String?
+  status           MaterialStatus @default(ACTIVE)
+  creationSource   CreationSource @map("creation_source")
+  /// sha256 of the normalised identity (category, core name, brand, grade, size, pack, specification,
+  /// stock unit). Blocks exact duplicates at the DB level; near-duplicates go through the §6.5 flow.
+  identityKey      String         @map("identity_key")
+  createdById      String         @map("created_by_id") @db.Uuid
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deactivatedById  String?        @map("deactivated_by_id") @db.Uuid
+  deactivatedAt    DateTime?      @map("deactivated_at") @db.Timestamptz(3)
+  version          Int            @default(0) // optimistic concurrency for admin edits
+
+  project       Project                 @relation(fields: [projectId], references: [id])
+  category      MaterialCategory        @relation("MaterialCategory", fields: [projectId, categoryId], references: [projectId, id])
+  subcategory   MaterialCategory?       @relation("MaterialSubcategory", fields: [projectId, subcategoryId], references: [projectId, id])
+  stockUnit     Unit                    @relation("MaterialStockUnit", fields: [stockUnitId], references: [id])
+  packUnit      Unit?                   @relation("MaterialPackUnit", fields: [packUnitId], references: [id])
+  createdBy     User                    @relation("MaterialCreatedBy", fields: [createdById], references: [id])
+  deactivatedBy User?                   @relation("MaterialDeactivatedBy", fields: [deactivatedById], references: [id])
+  specs         MaterialSpecification[]
+  conversions   UnitConversion[]
+
+  @@unique([projectId, id])
+  @@unique([projectId, code])
+  @@unique([projectId, identityKey])
+  @@index([projectId, categoryId])
+  @@index([projectId, status])
+  @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "materials_name_trgm")
+  @@map("materials")
+}
+
+/// Structured attributes for spec-conflict checks (PRD §6.5, §8.2). Keys come from the registry in
+/// packages/shared (SIZE, GRADE, PACK).
+model MaterialSpecification {
+  id              String   @id @default(uuid()) @db.Uuid
+  materialId      String   @map("material_id") @db.Uuid
+  key             String
+  valueText       String?  @map("value_text")
+  valueNumeric    Decimal? @map("value_numeric") @db.Decimal(18, 4)
+  unitId          String?  @map("unit_id") @db.Uuid
+  normalizedValue String   @map("normalized_value") // canonical comparable form, e.g. "12MM", "FE550"
+
+  material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  unit     Unit?    @relation(fields: [unitId], references: [id])
+
+  @@unique([materialId, key])
+  @@index([key, normalizedValue])
+  @@map("material_specifications")
+}
+
+// ───────────────────── Cross-cutting ─────────────────────
+
+/// APPEND-ONLY (PRD §18.3, §26 rule 16). UPDATE/DELETE blocked by trigger.
+model AuditLog {
+  id          BigInt    @id @default(autoincrement())
+  projectId   String?   @map("project_id") @db.Uuid
+  actorType   ActorType @map("actor_type")
+  actorUserId String?   @map("actor_user_id") @db.Uuid
+  action      String // "material.create", "user.password_reset", ...
+  entityType  String    @map("entity_type")
+  entityId    String    @map("entity_id")
+  before      Json?
+  after       Json?
+  metadata    Json?
+  requestId   String?   @map("request_id")
+  ip          String?
+  userAgent   String?   @map("user_agent")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  project Project? @relation(fields: [projectId], references: [id])
+  actor   User?    @relation("AuditActor", fields: [actorUserId], references: [id])
+
+  @@index([projectId, createdAt])
+  @@index([entityType, entityId])
+  @@index([actorUserId, createdAt])
+  @@map("audit_logs")
+}
+
+/// Gap-tolerant human IDs per project (MAT-000123, RCV-2026-000045).
+model IdSequence {
+  projectId String        @map("project_id") @db.Uuid
+  scope     SequenceScope
+  year      Int // 0 for non-yearly scopes (MATERIAL)
+  nextValue BigInt        @default(1) @map("next_value")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@id([projectId, scope, year])
+  @@map("id_sequences")
 }

@@ -5,5 +5,5 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src", "*.mts"]
+  "include": ["src", "test", "*.mts"]
 }
