@@ -34,7 +34,8 @@ const optionalQuantity = z
 
 export const PageQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  // Up to 500 so a picker can load a whole master list in one request.
+  pageSize: z.coerce.number().int().min(1).max(500).default(25),
 });
 
 export interface Paginated<T> {

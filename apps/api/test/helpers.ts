@@ -1,9 +1,11 @@
 import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { type PrismaClient, addMember, createProject } from '@kavach/db';
 import type { AuthResponse, RoleCode } from '@kavach/shared';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { configureApp } from '../src/app.setup';
 import { hashPassword } from '../src/common/auth/password.service';
 import { PrismaService } from '../src/common/prisma/prisma.service';
 
@@ -20,7 +22,8 @@ export function uniqueTag(): string {
 
 export async function createApp(): Promise<INestApplication> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app = moduleRef.createNestApplication();
+  const app = moduleRef.createNestApplication<NestExpressApplication>();
+  configureApp(app);
   await app.init();
   return app;
 }
@@ -87,16 +90,28 @@ export async function createFixture(app: INestApplication): Promise<Fixture> {
 
 /** HTTP client acting as `actor` inside `projectId`. */
 export function as(app: INestApplication, actor: Pick<Actor, 'token'>, projectId?: string) {
-  const call = (method: 'get' | 'post' | 'patch', url: string, body?: object) => {
+  const call = (
+    method: 'get' | 'post' | 'patch',
+    url: string,
+    body?: object,
+    headers?: Record<string, string>,
+  ) => {
     const agent = request(app.getHttpServer());
     let req = agent[method](url).set('Authorization', `Bearer ${actor.token}`);
     if (projectId) req = req.set('X-Project-Id', projectId);
+    if (headers) {
+      for (const [k, v] of Object.entries(headers)) {
+        req = req.set(k, v);
+      }
+    }
     return body === undefined ? req : req.send(body);
   };
   return {
-    get: (url: string) => call('get', url),
-    post: (url: string, body: object = {}) => call('post', url, body),
-    patch: (url: string, body: object = {}) => call('patch', url, body),
+    get: (url: string, headers?: Record<string, string>) => call('get', url, undefined, headers),
+    post: (url: string, body: object = {}, headers?: Record<string, string>) =>
+      call('post', url, body, headers),
+    patch: (url: string, body: object = {}, headers?: Record<string, string>) =>
+      call('patch', url, body, headers),
   };
 }
 

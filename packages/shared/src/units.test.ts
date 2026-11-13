@@ -96,6 +96,22 @@ describe('convert (PRD §12)', () => {
     });
   });
 
+  it('issue and return never use a material-specific row, but still use the pack size (Q10)', () => {
+    const rows = [{ fromUnitId: 'NOS', toUnitId: 'KG', factor: '10.656', materialId: 'steel' }];
+    const issue = { ...ctx(steelBars, rows), allowMaterialSpecific: false };
+    expect(convert('106.56', 'KG', 'NOS', issue)).toEqual({ ok: false, reason: 'INCOMPATIBLE' });
+
+    const cementIssue = { ...ctx(cement), allowMaterialSpecific: false };
+    const bags = convert('100', 'KG', 'BAG', cementIssue);
+    expect(bags.ok && bags.qty.toString()).toBe('2');
+    expect(convert('25', 'KG', 'BAG', cementIssue)).toEqual({
+      ok: false,
+      reason: 'NOT_REPRESENTABLE',
+    });
+    const mt = convert('2500', 'KG', 'MT', { ...ctx(), allowMaterialSpecific: false });
+    expect(mt.ok && mt.qty.toString()).toBe('2.5');
+  });
+
   it('rejects unknown units', () => {
     expect(convert('1', 'KG', 'XYZ', ctx())).toEqual({ ok: false, reason: 'UNKNOWN_UNIT' });
   });

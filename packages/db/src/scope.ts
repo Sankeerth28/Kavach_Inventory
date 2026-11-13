@@ -23,6 +23,19 @@ const STRICT = new Set<string>([
   'ProjectMember',
   'ProjectMemberStore',
   'IdSequence',
+  'Contractor',
+  'Posting',
+  'MaterialTransaction',
+  'StockBalance',
+  'StockVerification',
+  'StockAdjustment',
+  'Supplier',
+  'SupplierAlias',
+  'SupplierMaterialMapping',
+  'Invoice',
+  'InvoicePage',
+  'InvoiceItem',
+  'AiProcessingLog',
 ]);
 
 /** Models where `projectId: null` is a real value (system units, auth audit events). It must still be explicit. */

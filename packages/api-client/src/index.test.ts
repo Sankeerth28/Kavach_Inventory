@@ -128,6 +128,40 @@ describe('api client', () => {
   it('builds query strings without empty values', async () => {
     const t = setup('web', () => json(200, { items: [], total: 0, page: 1, pageSize: 25 }));
     await t.client.materials.list({ q: 'tmt 12', status: undefined, page: 2 });
-    expect(t.calls[0]!.path).toBe('/materials?q=tmt+12&page=2');
+    expect(t.calls[0]!.path).toBe('/materials?q=tmt%2012&page=2');
+  });
+
+  it('uploads a document page as raw bytes and downloads it as a file', async () => {
+    const t = setup('web', (url) => {
+      if (url.pathname === '/auth/login') return json(200, auth('access-1'));
+      if (url.pathname.endsWith('/content')) {
+        return new Response(new Blob(['%PDF-1.4'], { type: 'application/pdf' }), { status: 200 });
+      }
+      return json(201, { id: 'inv-1' });
+    });
+    await t.client.auth.login('a@b.c', 'pw');
+    const bytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+    await t.client.invoices.uploadPage('inv-1', bytes, 'application/pdf', 'bill nov.pdf');
+    const upload = t.calls.at(-1)!;
+    expect(upload.path).toBe('/invoices/inv-1/pages');
+    expect(upload.init.body).toBe(bytes);
+    expect(header(upload.init, 'Content-Type')).toBe('application/pdf');
+    expect(header(upload.init, 'X-File-Name')).toBe('bill%20nov.pdf');
+    expect(header(upload.init, 'Authorization')).toBe('Bearer access-1');
+
+    const file = await t.client.invoices.pageContent('inv-1', 1);
+    expect(await file.text()).toBe('%PDF-1.4');
+  });
+
+  it('sends the idempotency key with Confirm & Receive', async () => {
+    const t = setup('web', (url) =>
+      url.pathname === '/auth/login' ? json(200, auth('access-1')) : json(201, { id: 'p1' }),
+    );
+    await t.client.auth.login('a@b.c', 'pw');
+    await t.client.invoices.confirm('inv-1', 4, 'key-1234567890123456');
+    const call = t.calls.at(-1)!;
+    expect(call.path).toBe('/invoices/inv-1/confirm');
+    expect(call.init.body).toBe(JSON.stringify({ version: 4 }));
+    expect(header(call.init, 'Idempotency-Key')).toBe('key-1234567890123456');
   });
 });

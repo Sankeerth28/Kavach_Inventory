@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Alert, Badge, Button, Select } from '@/components/ui';
+import { StoreSwitcher } from '@/components/store-switcher';
 import { type NavItem, canOpen, navFor } from '@/lib/nav';
 import { useSession } from '@/lib/session';
+import { StoreProvider } from '@/lib/store-context';
 import { cn } from '@/lib/utils';
 
 const GROUPS: NavItem['group'][] = ['Daily work', 'Inventory', 'Setup', 'Oversight'];
@@ -47,89 +49,92 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const allowed = canOpen(pathname, membership.permissions);
 
   return (
-    <div className="flex min-h-screen">
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-40 w-60 shrink-0 overflow-y-auto border-r border-border bg-surface',
-          'transition-transform md:static md:translate-x-0',
-          menuOpen ? 'translate-x-0' : '-translate-x-full',
-        )}
-      >
-        <div className="px-5 py-4 text-lg font-semibold tracking-tight">{APP_NAME}</div>
-        <nav className="px-3 pb-6" aria-label="Main">
-          {GROUPS.map((group) => {
-            const inGroup = items.filter((i) => i.group === group);
-            if (inGroup.length === 0) return null;
-            return (
-              <div key={group} className="mb-4">
-                <p className="px-2 pb-1 text-xs font-medium text-muted-foreground uppercase">
-                  {group}
-                </p>
-                {inGroup.map((item) =>
-                  item.phase ? (
-                    <span
-                      key={item.href}
-                      className="flex items-center justify-between rounded-md px-2 py-2 text-sm text-muted-foreground"
-                      title={`Arrives in Phase ${item.phase}`}
-                    >
-                      {item.label}
-                      <span className="text-[10px]">Phase {item.phase}</span>
-                    </span>
-                  ) : (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMenuOpen(false)}
-                      aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
-                      className={cn(
-                        'block rounded-md px-2 py-2 text-sm hover:bg-muted',
-                        pathname.startsWith(item.href) && 'bg-primary/10 font-medium text-primary',
-                      )}
-                    >
-                      {item.label}
-                    </Link>
-                  ),
-                )}
-              </div>
-            );
-          })}
-        </nav>
-      </aside>
-      {menuOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/30 md:hidden"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
-          >
-            ☰
-          </Button>
-          {me.memberships.length > 1 ? (
-            <Select
-              aria-label="Project"
-              className="h-9 w-auto max-w-[50vw]"
-              value={membership.projectId}
-              onChange={(e) => session.selectProject(e.target.value)}
-            >
-              {me.memberships.map((m) => (
-                <option key={m.projectId} value={m.projectId}>
-                  {m.projectName}
-                </option>
-              ))}
-            </Select>
-          ) : (
-            <span className="truncate text-sm font-medium">{membership.projectName}</span>
+    <StoreProvider>
+      <div className="flex min-h-screen">
+        <aside
+          className={cn(
+            'fixed inset-y-0 left-0 z-40 w-60 shrink-0 overflow-y-auto border-r border-border bg-surface',
+            'transition-transform md:static md:translate-x-0',
+            menuOpen ? 'translate-x-0' : '-translate-x-full',
           )}
-          <div className="ml-auto flex items-center gap-2">
+        >
+          <div className="px-5 py-4 text-lg font-semibold tracking-tight">{APP_NAME}</div>
+          <nav className="px-3 pb-6" aria-label="Main">
+            {GROUPS.map((group) => {
+              const inGroup = items.filter((i) => i.group === group);
+              if (inGroup.length === 0) return null;
+              return (
+                <div key={group} className="mb-4">
+                  <p className="px-2 pb-1 text-xs font-medium text-muted-foreground uppercase">
+                    {group}
+                  </p>
+                  {inGroup.map((item) =>
+                    item.phase ? (
+                      <span
+                        key={item.href}
+                        className="flex items-center justify-between rounded-md px-2 py-2 text-sm text-muted-foreground"
+                        title={`Arrives in Phase ${item.phase}`}
+                      >
+                        {item.label}
+                        <span className="text-[10px]">Phase {item.phase}</span>
+                      </span>
+                    ) : (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMenuOpen(false)}
+                        aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
+                        className={cn(
+                          'block rounded-md px-2 py-2 text-sm hover:bg-muted',
+                          pathname.startsWith(item.href) && 'bg-primary/10 font-medium text-primary',
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    ),
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+        </aside>
+        {menuOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/30 md:hidden"
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              ☰
+            </Button>
+            {me.memberships.length > 1 ? (
+              <Select
+                aria-label="Project"
+                className="h-8 w-auto max-w-[40vw] text-xs py-1"
+                value={membership.projectId}
+                onChange={(e) => session.selectProject(e.target.value)}
+              >
+                {me.memberships.map((m) => (
+                  <option key={m.projectId} value={m.projectId}>
+                    {m.projectName}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <span className="truncate text-sm font-medium">{membership.projectName}</span>
+            )}
+            <span className="text-border">|</span>
+            <StoreSwitcher />
+            <div className="ml-auto flex items-center gap-2">
             <div className="relative">
               <Button
                 variant="ghost"
@@ -173,5 +178,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </main>
       </div>
     </div>
+    </StoreProvider>
   );
 }

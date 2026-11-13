@@ -108,10 +108,11 @@ export function parseSpecs(src: SpecSource): ParsedSpecs {
   // Name: pull out size, grade and pack tokens; what is left is the core name.
   let name = normalise(src.name);
   name = harvest(name, SIZE_RE, (m) => sizes.push(sizeToken(m[1]!, m[2]!)));
+  // Packs before grades: in "OPC 53 GRADE 50 KG" the 50 belongs to the pack, not to "GRADE 50".
+  name = harvest(name, PACK_RE, (m) => packs.push(`${canonicalNumber(m[1]!)}${m[2]!}`));
   const g = gradeTokens(name);
   grades.push(...g.tokens);
-  name = harvest(g.rest, PACK_RE, (m) => packs.push(`${canonicalNumber(m[1]!)}${m[2]!}`));
-  const coreName = name.replace(/\s+/g, ' ').trim();
+  const coreName = g.rest.replace(/\s+/g, ' ').trim();
 
   // Size field: "12mm", "230 x 110 x 75 mm"; a value with no unit is kept as written.
   const sizeField = normalise(src.size);

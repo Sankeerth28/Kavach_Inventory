@@ -82,6 +82,23 @@ export const PERMISSION_DEFS = {
     roles: SM,
   },
 
+  'contractor:view': { module: 'Contractors', description: 'View contractors', roles: BOTH },
+  'contractor:create': {
+    module: 'Contractors',
+    description: 'Add a contractor, also inline while issuing (DECISIONS Q31)',
+    roles: BOTH,
+  },
+  'contractor:manage': {
+    module: 'Contractors',
+    description: 'Edit, merge and deactivate contractors',
+    roles: PA,
+  },
+
+  'stock:reconcile': {
+    module: 'Current Stock',
+    description: 'Check stock balances against the ledger',
+    roles: PA,
+  },
   'stock:view': { module: 'Current Stock', description: 'View current stock', roles: BOTH },
   'stock_verification:submit': {
     module: 'Stock Verification',
@@ -121,8 +138,8 @@ export const PERMISSION_DEFS = {
   'supplier:manage': { module: 'Suppliers', description: 'Manage suppliers', roles: PA },
   'supplier:create_via_receipt': {
     module: 'Suppliers',
-    description: 'Create a supplier during Material In',
-    roles: PA,
+    description: 'Create a supplier during Material In (DECISIONS Q7)',
+    roles: SM,
   },
   'supplier_mapping:manage': {
     module: 'Supplier Mapping',

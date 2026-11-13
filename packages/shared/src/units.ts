@@ -34,6 +34,11 @@ export interface ConversionContext {
   units: ReadonlyMap<string, UnitInfo>;
   conversions: readonly ConversionRow[];
   material?: MaterialUnitInfo;
+  /**
+   * false for issue and return (DECISIONS Q10): only general conversions and the pack size apply.
+   * Material-specific rows (the bar-count ↔ weight kind) are for receipts. Default true.
+   */
+  allowMaterialSpecific?: boolean;
 }
 
 export type ConversionResult =
@@ -59,7 +64,7 @@ function findFactor(from: string, to: string, ctx: ConversionContext): Decimal |
   const m = ctx.material;
 
   // 1. Material-specific approved conversion.
-  if (m) {
+  if (m && ctx.allowMaterialSpecific !== false) {
     const specific = rowFactor(ctx.conversions, from, to, m.id);
     if (specific) return specific;
   }

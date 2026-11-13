@@ -2,6 +2,11 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'test/**/*.spec.ts'],
+    // Pipeline tests share one throwaway PostgreSQL database (test/global-setup.ts).
+    globalSetup: ['test/global-setup.ts'],
+    fileParallelism: false,
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
   },
 });

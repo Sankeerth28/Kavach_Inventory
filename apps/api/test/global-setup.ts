@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import os from 'node:os';
 import path from 'node:path';
 import { PrismaClient, syncSystemData } from '@kavach/db';
 
@@ -52,6 +53,10 @@ export default async function setup(): Promise<() => Promise<void>> {
   process.env.DATABASE_URL = testUrl.toString();
   process.env.JWT_SECRET = 'test-secret-test-secret-test-secret-1234';
   process.env.WEB_ORIGIN = 'http://localhost:3000';
+  // Uploaded documents go to a throwaway directory, and no Redis is needed.
+  process.env.STORAGE_DRIVER = 'local';
+  process.env.STORAGE_LOCAL_DIR = path.join(os.tmpdir(), `kavach-api-test-${process.pid}`);
+  process.env.DOCUMENT_QUEUE = 'db';
 
   return async () => {
     await admin.$executeRawUnsafe(`DROP DATABASE IF EXISTS "${dbName}" WITH (FORCE)`);

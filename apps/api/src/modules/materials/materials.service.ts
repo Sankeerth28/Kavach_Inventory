@@ -154,7 +154,7 @@ const isUniqueViolation = (e: unknown) =>
 
 /**
  * Material Master (PRD §6). Manual creation is a Project Admin action (§6.4 method A);
- * Store Managers create materials only through Material In, which arrives in Phase 3.
+ * Store Managers create materials only through Material In (Quick Receive, Confirm & Receive).
  */
 @Injectable()
 export class MaterialsService {
@@ -208,37 +208,9 @@ export class MaterialsService {
   async create(ctx: RequestContext, input: CreateMaterial): Promise<MaterialDto> {
     const { confirmNotDuplicate, ...data } = input;
     try {
-      return await this.prisma.db.$transaction(async (tx) => {
-        const resolved = await this.resolve(tx, ctx, fromInput(data));
-        const duplicates = await this.findDuplicates(tx, ctx, resolved);
-        this.assertNoDuplicate(duplicates, confirmNotDuplicate);
-
-        const code = formatMaterialCode(await nextSequenceValue(tx, ctx.projectId, 'MATERIAL'));
-        const created = await tx.material.create({
-          data: {
-            ...this.columns(resolved),
-            projectId: ctx.projectId,
-            code,
-            creationSource: 'MANUAL',
-            createdById: ctx.userId,
-            specs: { create: this.specRows(resolved.profile) },
-          },
-          include: INCLUDE,
-        });
-        await this.audit.write(tx, ctx, {
-          action: 'material.create',
-          entityType: 'material',
-          entityId: created.id,
-          after: toDto(created),
-          metadata: {
-            source: 'MANUAL',
-            // Recorded when the admin created it despite a similar material (PRD §6.5).
-            similarMaterialIds: duplicates.candidates.map((c) => c.material.id),
-            confirmedNotDuplicate: duplicates.needsConfirmation,
-          },
-        });
-        return toDto(created);
-      });
+      return await this.prisma.db.$transaction((tx) =>
+        this.createInTransaction(tx, ctx, data, { source: 'MANUAL', confirmNotDuplicate }),
+      );
     } catch (e) {
       // Two admins creating the same material at once: the unique identity key decides.
       if (isUniqueViolation(e)) {
@@ -248,12 +220,96 @@ export class MaterialsService {
     }
   }
 
+  /**
+   * Creates a material inside the caller's transaction. This is the one path every new material
+   * takes: manual creation, Quick Receive and Confirm & Receive (PRD §6.4). The same validation,
+   * identity key and duplicate check (PRD §6.5) apply to all three, and the material commits or
+   * rolls back with whatever the caller is posting (CLAUDE.md invariant 9).
+   */
+  async createInTransaction(
+    tx: Db,
+    ctx: RequestContext,
+    data: MaterialData,
+    opts: {
+      source: 'MANUAL' | 'AI_INVOICE' | 'QUICK_RECEIVE';
+      confirmNotDuplicate: boolean;
+      /** Extra audit context: the invoice line and what the AI proposed (PRD §18.3). */
+      metadata?: Record<string, unknown>;
+    },
+  ): Promise<MaterialDto> {
+    const resolved = await this.resolve(tx, ctx, fromInput(data));
+    const duplicates = await this.findDuplicates(tx, ctx, resolved);
+    this.assertNoDuplicate(duplicates, opts.confirmNotDuplicate);
+
+    const code = formatMaterialCode(await nextSequenceValue(tx, ctx.projectId, 'MATERIAL'));
+    const created = await tx.material.create({
+      data: {
+        ...this.columns(resolved),
+        projectId: ctx.projectId,
+        code,
+        creationSource: opts.source,
+        createdById: ctx.userId,
+        specs: { create: this.specRows(resolved.profile) },
+      },
+      include: INCLUDE,
+    });
+    await this.audit.write(tx, ctx, {
+      action: 'material.create',
+      entityType: 'material',
+      entityId: created.id,
+      after: toDto(created),
+      metadata: {
+        source: opts.source,
+        // Recorded when it was created despite a similar material (PRD §6.5).
+        similarMaterialIds: duplicates.candidates.map((c) => c.material.id),
+        confirmedNotDuplicate: duplicates.needsConfirmation,
+        ...opts.metadata,
+      },
+    });
+    return toDto(created);
+  }
+
+  /** The identity a material with these fields would have. Throws when the fields are not valid. */
+  async identityKeyFor(tx: Db, ctx: RequestContext, data: MaterialData): Promise<string> {
+    return (await this.resolve(tx, ctx, fromInput(data))).identityKey;
+  }
+
   async update(ctx: RequestContext, id: string, input: UpdateMaterial): Promise<MaterialDto> {
     const { version, confirmNotDuplicate, ...changes } = input;
     try {
       return await this.prisma.db.$transaction(async (tx) => {
         const before = await this.load(tx, ctx, id);
         if (before.version !== version) throw this.stale();
+
+        // Q22: Once a material has transactions, its identity fields are locked.
+        const txnCount = await tx.materialTransaction.count({
+          where: { projectId: ctx.projectId, materialId: id },
+        });
+        if (txnCount > 0) {
+          const lockedFields = [
+            'stockUnitId',
+            'packSize',
+            'packUnitId',
+            'grade',
+            'size',
+            'specification',
+          ] as const;
+          for (const f of lockedFields) {
+            if (changes[f] !== undefined) {
+              const beforeRec = before as unknown as Record<string, unknown>;
+              const changeRec = changes as unknown as Record<string, unknown>;
+              const beforeVal = beforeRec[f]?.toString?.() ?? beforeRec[f] ?? null;
+              const changeVal = changeRec[f]?.toString?.() ?? changeRec[f] ?? null;
+              if (beforeVal !== changeVal) {
+                throw new DomainError(
+                  'MATERIAL_LOCKED',
+                  `Material identity field '${f}' cannot be changed after the first transaction.`,
+                  409,
+                );
+              }
+            }
+          }
+        }
 
         const current = fieldsOf(before);
         const merged = { ...current };
@@ -298,7 +354,7 @@ export class MaterialsService {
     }
   }
 
-  /** Deactivation is an administrative action (PRD §3.3). The zero-stock rule (Q22) joins in Phase 2. */
+  /** Deactivation is an administrative action (PRD §3.3). Only allowed at zero stock (Q22). */
   async setStatus(
     ctx: RequestContext,
     id: string,
@@ -307,6 +363,26 @@ export class MaterialsService {
     return this.prisma.db.$transaction(async (tx) => {
       const before = await this.load(tx, ctx, id);
       if (before.status === status) return toDto(before);
+
+      if (status === 'INACTIVE') {
+        const balances = await tx.stockBalance.findMany({
+          where: { projectId: ctx.projectId, materialId: id },
+        });
+        for (const b of balances) {
+          if (
+            Number(b.availableQty) > 0 ||
+            Number(b.damagedQty) > 0 ||
+            Number(b.scrapQty) > 0
+          ) {
+            throw new DomainError(
+              'MATERIAL_HAS_STOCK',
+              'Cannot deactivate a material with stock on hand.',
+              409,
+            );
+          }
+        }
+      }
+
       await tx.material.updateMany({
         where: { projectId: ctx.projectId, id },
         data: {

@@ -171,14 +171,14 @@ export interface AuditLogDto {
   createdAt: string;
 }
 
+/** Phase 1 dashboard summary response. */
 export interface DashboardSummaryDto {
   view: 'FULL' | 'OPERATIONAL';
-  /** PRD §5.1 "Total Material Types". */
   materialCount: number;
   inactiveMaterialCount: number;
   categoryCount: number;
   storeCount: number;
   locationCount: number;
-  /** Only in the full view. */
   memberCount: number | null;
 }
+

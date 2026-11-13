@@ -20,6 +20,8 @@ allowBuilds:
   esbuild: true
   '@parcel/watcher': false
   msgpackr-extract: false
+  # sharp ships prebuilt binaries as optional dependencies; its install script only compiles from source.
+  sharp: false
 
 # Fail fast on the wrong Node version (see "engines" in package.json and .nvmrc).
 engineStrict: true

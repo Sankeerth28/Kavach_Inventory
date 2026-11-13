@@ -92,25 +92,32 @@ export async function addMember(tx: Tx, input: AddMemberInput) {
 }
 
 /**
- * Allocates the next number of a per-project sequence. Atomic: the upsert locks the row, so two
- * concurrent transactions never receive the same number. Gaps are possible after a rollback.
+ * Allocates `count` consecutive numbers of a per-project sequence and returns the first.
+ * Atomic: the upsert locks the row, so two concurrent transactions never receive the same number.
+ * Gaps are possible after a rollback.
  */
 export async function nextSequenceValue(
   tx: Pick<Tx, '$queryRaw'>,
   projectId: string,
   scope: SequenceScope,
   year = 0,
+  count = 1,
 ): Promise<bigint> {
   const rows = await tx.$queryRaw<{ value: bigint }[]>`
     INSERT INTO id_sequences (project_id, scope, year, next_value)
-    VALUES (${projectId}::uuid, ${scope}::"SequenceScope", ${year}, 2)
+    VALUES (${projectId}::uuid, ${scope}::"SequenceScope", ${year}, ${1 + count})
     ON CONFLICT (project_id, scope, year)
-    DO UPDATE SET next_value = id_sequences.next_value + 1
-    RETURNING next_value - 1 AS value`;
+    DO UPDATE SET next_value = id_sequences.next_value + ${count}
+    RETURNING next_value - ${count} AS value`;
   return rows[0]!.value;
 }
 
 /** PRD §6.2 Material ID: MAT-000123 */
 export function formatMaterialCode(n: bigint): string {
   return `MAT-${n.toString().padStart(6, '0')}`;
+}
+
+/** Posting references and transaction IDs: RCV-2026-000045, TXN-2026-000123 (PRD §10.2 step 9, §18.2). */
+export function formatYearlyNumber(prefix: string, year: number, n: bigint): string {
+  return `${prefix}-${year}-${n.toString().padStart(6, '0')}`;
 }

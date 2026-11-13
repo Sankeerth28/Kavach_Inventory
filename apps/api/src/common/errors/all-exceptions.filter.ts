@@ -55,6 +55,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const code = STATUS_CODES[status] ?? (status >= 500 ? 'INTERNAL' : 'VALIDATION_FAILED');
       return { status, body: { error: { code, message: e.message } } };
     }
+    // The body parser refuses an upload above its limit before any handler runs.
+    if ((e as { type?: string } | null)?.type === 'entity.too.large') {
+      return {
+        status: 413,
+        body: { error: { code: 'FILE_TOO_LARGE', message: 'The file is larger than 15 MB.' } },
+      };
+    }
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       // Unique or foreign-key violation that a service did not translate itself.
       if (e.code === 'P2002' || e.code === 'P2003') {

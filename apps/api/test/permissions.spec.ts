@@ -11,6 +11,7 @@ import {
   createApp,
   createFixture,
   loadMasters,
+  rawDb,
 } from './helpers';
 
 interface Route {
@@ -52,7 +53,7 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
   let m: Masters;
   let routes: Route[];
   /** Admin-only requests, keyed "METHOD /route/pattern". Bodies are valid, so only the role differs. */
-  let adminOnly: Record<string, { url: string; body?: object }>;
+  let adminOnly: Record<string, { url: string; body?: object; headers?: Record<string, string> }>;
 
   beforeAll(async () => {
     app = await createApp();
@@ -67,6 +68,15 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
           name: 'Permission Test Putty',
           categoryId: m.categoryId('Paint and Finishing'),
           stockUnitId: m.unitId('KG'),
+        })
+        .expect(201)
+    ).body as { id: string; version: number };
+    const material2 = (
+      await admin
+        .post('/materials', {
+          name: 'Permission Test Cement',
+          categoryId: m.categoryId('Cement'),
+          stockUnitId: m.unitId('BAG'),
         })
         .expect(201)
     ).body as { id: string; version: number };
@@ -90,7 +100,103 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
         .expect(201)
     ).body as { id: string };
 
+    const contractor = (
+      await admin.post('/contractors', { name: 'Alpha Infra', confirmNotDuplicate: true }).expect(201)
+    ).body as { id: string };
+    const contractorMergeSrc = (
+      await admin.post('/contractors', { name: 'Beta Structures', confirmNotDuplicate: true }).expect(201)
+    ).body as { id: string };
+    const contractorMergeTarget = (
+      await admin.post('/contractors', { name: 'Gamma Developers', confirmNotDuplicate: true }).expect(201)
+    ).body as { id: string };
+
+    const matInventory = (
+      await admin
+        .post('/materials', {
+          name: 'Permission Test Inventory Material',
+          categoryId: m.categoryId('Paint and Finishing'),
+          stockUnitId: m.unitId('KG'),
+        })
+        .expect(201)
+    ).body as { id: string; version: number };
+
+    const manager = as(app, fx.manager, fx.projectId);
+    const posting = (
+      await manager
+        .post(
+          '/inventory/quick-receive',
+          {
+            storeId: fx.storeId,
+            materialId: matInventory.id,
+            quantity: '50',
+            supplierName: 'Perm Supplier',
+            externalRef: 'CH-PERM-001',
+          },
+          { 'Idempotency-Key': 'perm-quick-receive-seed-key' },
+        )
+        .expect(201)
+    ).body as { id: string };
+
+    const verApprove = (
+      await manager
+        .post('/stock-verifications', {
+          storeId: fx.storeId,
+          materialId: matInventory.id,
+          physicalQuantity: '50',
+          reason: 'Count for approve test',
+        })
+        .expect(201)
+    ).body as { id: string };
+
+    const verReject = (
+      await manager
+        .post('/stock-verifications', {
+          storeId: fx.storeId,
+          materialId: material2.id,
+          physicalQuantity: '0',
+          reason: 'Count for reject test',
+        })
+        .expect(201)
+    ).body as { id: string };
+
+    // Phase 3 fixtures: a supplier, a learned mapping and a document waiting for review.
+    const supplier = (await admin.post('/suppliers', { name: 'Permission Supplier' }).expect(201))
+      .body as { id: string };
+    const db = rawDb(app);
+    const mapping = await db.supplierMaterialMapping.create({
+      data: {
+        projectId: fx.projectId,
+        supplierId: supplier.id,
+        description: 'PERM PUTTY 20KG',
+        normalizedDescription: 'PERM PUTTY 20 KG',
+        materialId: material.id,
+        liveKey: `${supplier.id}:PERM PUTTY 20 KG`,
+        confirmedById: fx.manager.userId,
+      },
+    });
+    const draft = await db.invoice.create({
+      data: {
+        projectId: fx.projectId,
+        storeId: fx.storeId,
+        uploadedById: fx.manager.userId,
+        status: 'READY_FOR_REVIEW',
+        stage: 'DONE',
+      },
+    });
+
     adminOnly = {
+      'POST /suppliers': { url: '/suppliers', body: { name: 'Supplier made by SM' } },
+      'PATCH /suppliers/:id': { url: `/suppliers/${supplier.id}`, body: { address: 'Pune' } },
+      'GET /supplier-mappings': { url: '/supplier-mappings' },
+      'POST /supplier-mappings/:id/disable': {
+        url: `/supplier-mappings/${mapping.id}/disable`,
+        body: { reason: 'Disabled by admin' },
+      },
+      'POST /invoices/:id/duplicate-override': {
+        url: `/invoices/${draft.id}/duplicate-override`,
+        body: { note: 'A genuinely different document' },
+      },
+      'PATCH /settings/confidence': { url: '/settings/confidence', body: { auto: 0.95, confirm: 0.7 } },
       'PATCH /projects/current': { url: '/projects/current', body: { name: 'Renamed by SM' } },
       'POST /stores': { url: '/stores', body: { code: 'SM-STORE', name: 'SM store' } },
       'PATCH /stores/:id': { url: `/stores/${fx.storeId}`, body: { name: 'Renamed' } },
@@ -147,6 +253,40 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
         body: { password: 'Hijack3d!1' },
       },
       'GET /audit-logs': { url: '/audit-logs' },
+      'GET /stock/reconciliation': { url: '/stock/reconciliation' },
+      'PATCH /contractors/:id': {
+        url: `/contractors/${contractor.id}`,
+        body: { name: 'Renamed Contractor' },
+      },
+      'POST /contractors/:id/merge': {
+        url: `/contractors/${contractorMergeSrc.id}/merge`,
+        body: { intoId: contractorMergeTarget.id },
+      },
+      'POST /inventory/adjustments': {
+        url: '/inventory/adjustments',
+        body: {
+          storeId: fx.storeId,
+          materialId: matInventory.id,
+          bucket: 'AVAILABLE',
+          quantity: '5',
+          kind: 'MANUAL_CORRECTION',
+          reason: 'Adjusted by admin',
+        },
+        headers: { 'Idempotency-Key': 'perm-adj-admin-key' },
+      },
+      'POST /inventory/postings/:id/reverse': {
+        url: `/inventory/postings/${posting.id}/reverse`,
+        body: { reason: 'Reversed by admin' },
+        headers: { 'Idempotency-Key': 'perm-rev-admin-key' },
+      },
+      'POST /stock-verifications/:id/approve': {
+        url: `/stock-verifications/${verApprove.id}/approve`,
+        body: { note: 'Approved by admin' },
+      },
+      'POST /stock-verifications/:id/reject': {
+        url: `/stock-verifications/${verReject.id}/reject`,
+        body: { note: 'Rejected by admin' },
+      },
     };
   });
 
@@ -187,9 +327,12 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
 
   it('denies the Store Manager every admin-only action', async () => {
     const manager = as(app, fx.manager, fx.projectId);
-    for (const [key, { url, body }] of Object.entries(adminOnly)) {
+    for (const [key, { url, body, headers }] of Object.entries(adminOnly)) {
       const method = key.split(' ')[0]!.toLowerCase() as 'get' | 'post' | 'patch';
-      const res = method === 'get' ? await manager.get(url) : await manager[method](url, body);
+      const res =
+        method === 'get'
+          ? await manager.get(url, headers)
+          : await manager[method](url, body, headers);
       expect(res.status, key).toBe(403);
       expect(res.body.error.code, key).toBe('FORBIDDEN');
     }
@@ -213,11 +356,14 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
 
   it('lets the Project Admin through the same requests', async () => {
     const admin = as(app, fx.admin, fx.projectId);
-    for (const [key, { url, body }] of Object.entries(adminOnly)) {
+    for (const [key, { url, body, headers }] of Object.entries(adminOnly)) {
       // Resetting your own password and demoting the manager are covered in users.spec.ts.
       if (key.startsWith('POST /users/:userId/reset-password')) continue;
       const method = key.split(' ')[0]!.toLowerCase() as 'get' | 'post' | 'patch';
-      const res = method === 'get' ? await admin.get(url) : await admin[method](url, body);
+      const res =
+        method === 'get'
+          ? await admin.get(url, headers)
+          : await admin[method](url, body, headers);
       expect(res.status, `${key} → ${JSON.stringify(res.body)}`).toBeLessThan(300);
     }
   });
@@ -234,6 +380,11 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
       '/units',
       '/unit-conversions',
       '/materials',
+      '/suppliers',
+      '/invoices',
+      '/ai-logs',
+      '/ai-logs/overview',
+      '/settings/confidence',
     ]) {
       const res = await manager.get(url);
       expect(res.status, url).toBe(200);

@@ -140,4 +140,16 @@ describe('duplicate material detection (PRD §6.5)', () => {
     expect(assess(steel('Binding Wire'), steel('TMT Steel 12mm'))).toBeNull();
     expect(assess(cement('White Cement 50kg'), steel('TMT Steel 12mm'))).toBeNull();
   });
+
+  it('reads the pack, not a second grade, from "OPC 53 GRADE 50KG"', () => {
+    const p = profileMaterial({
+      name: 'ULTRATECH OPC 53 GRADE 50KG',
+      categoryId: 'c',
+      categoryName: 'Cement',
+      brand: 'UltraTech',
+      stockUnitId: 'bag',
+    });
+    expect(p.specs).toEqual({ GRADE: '53', PACK: '50KG' });
+    expect(p.coreTokens).toEqual(['OPC']);
+  });
 });

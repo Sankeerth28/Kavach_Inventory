@@ -30,6 +30,7 @@ describe('navigation follows the permission matrices (PRD §3, §20.2, §20.3, Q
       'Units',
       'Locations',
       'Stores',
+      'Contractors',
       'User Management',
       'Settings',
       'Audit Logs',
@@ -42,11 +43,32 @@ describe('navigation follows the permission matrices (PRD §3, §20.2, §20.3, Q
   it('keeps a Store Manager off the setup pages and everyone off unbuilt modules', () => {
     const sm = permissionsForRole('STORE_MANAGER');
     const pa = permissionsForRole('PROJECT_ADMIN');
-    for (const path of ['/users', '/settings', '/audit-logs', '/categories', '/units', '/stores']) {
+    for (const path of [
+      '/users',
+      '/settings',
+      '/audit-logs',
+      '/categories',
+      '/units',
+      '/stores',
+      '/contractors',
+    ]) {
       expect(canOpen(path, sm), path).toBe(false);
       expect(canOpen(path, pa), path).toBe(true);
     }
     expect(canOpen('/materials', sm)).toBe(true);
-    expect(canOpen('/stock', pa)).toBe(false); // Phase 2
+    // Phase 2 active modules can be opened
+    expect(canOpen('/stock', pa)).toBe(true);
+    expect(canOpen('/material-out', sm)).toBe(true);
+    expect(canOpen('/material-return', sm)).toBe(true);
+    expect(canOpen('/transactions', pa)).toBe(true);
+    // Unbuilt later-phase modules remain blocked
+    expect(canOpen('/reports', pa)).toBe(false); // Phase 5
+    // Phase 3 modules: AI processing for both roles, suppliers for the admin, documents under Material In
+    expect(canOpen('/ai-processing', pa)).toBe(true);
+    expect(canOpen('/ai-processing', sm)).toBe(true);
+    expect(canOpen('/suppliers', pa)).toBe(true);
+    expect(canOpen('/suppliers', sm)).toBe(false);
+    expect(canOpen('/material-in/invoices/some-id', sm)).toBe(true);
+    expect(canOpen('/material-in/invoices/some-id', pa)).toBe(true);
   });
 });
