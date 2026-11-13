@@ -1,26 +1,74 @@
-import { APP_NAME } from '@kavach/shared';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { View } from 'react-native';
+import { NavProvider, type Route } from './lib/nav';
+import { SessionProvider, useSession } from './lib/session';
+import { ChangePasswordScreen, LoginScreen } from './screens/auth';
+import { HomeScreen } from './screens/home';
+import { InvoiceScreen } from './screens/invoice';
+import { MaterialInScreen } from './screens/material-in';
+import { MovementScreen } from './screens/movement';
+import { QuickReceiveScreen } from './screens/quick-receive';
+import { StockDetailScreen, StockScreen } from './screens/stock';
+import { PostedScreen, TransactionsScreen } from './screens/transactions';
+import { Banner, Button, Loading, styles } from './ui';
 
-export default function App() {
+function RouteView({ route }: { route: Route }) {
+  switch (route.name) {
+    case 'home':
+      return <HomeScreen />;
+    case 'stock':
+      return <StockScreen />;
+    case 'stockDetail':
+      return <StockDetailScreen materialId={route.materialId} />;
+    case 'materialIn':
+      return <MaterialInScreen />;
+    case 'invoice':
+      return <InvoiceScreen id={route.id} />;
+    case 'quickReceive':
+      return <QuickReceiveScreen />;
+    case 'materialOut':
+      return <MovementScreen kind="issue" materialId={route.materialId} />;
+    case 'materialReturn':
+      return <MovementScreen kind="return" />;
+    case 'transactions':
+      return <TransactionsScreen />;
+    case 'posted':
+      return <PostedScreen posting={route.posting} title={route.title} />;
+  }
+}
+
+function Root() {
+  const session = useSession();
+  if (session.status === 'loading') {
+    return (
+      <View style={styles.screen}>
+        <Loading text="Starting…" />
+      </View>
+    );
+  }
+  if (session.status === 'anonymous') return <LoginScreen />;
+  if (session.me?.user.mustChangePassword) return <ChangePasswordScreen />;
+  if (!session.membership) {
+    return (
+      <View style={[styles.screen, styles.body]}>
+        <Banner tone="warning">You are not a member of any project. Ask your Project Admin.</Banner>
+        <Button label="Sign out" variant="secondary" onPress={() => void session.logout()} />
+      </View>
+    );
+  }
+  // A new stack per project and store: no screen of one is left open over another.
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{APP_NAME}</Text>
-      <Text>Hello from the mobile app.</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavProvider key={`${session.membership.projectId}:${session.store?.id ?? ''}`}>
+      {(route) => <RouteView route={route} />}
+    </NavProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '600',
-  },
-});
+export default function App() {
+  return (
+    <SessionProvider>
+      <Root />
+      <StatusBar style="dark" />
+    </SessionProvider>
+  );
+}

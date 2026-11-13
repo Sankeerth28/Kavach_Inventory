@@ -16,9 +16,7 @@
     },
     "android": {
       "package": "com.kavachtechnologies.kavach",
-      "permissions": [
-        "CAMERA"
-      ]
+      "permissions": ["CAMERA"]
     },
     "plugins": [
       "expo-secure-store",
