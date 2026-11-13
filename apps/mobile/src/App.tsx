@@ -8,6 +8,7 @@ import { InvoiceScreen } from './screens/invoice';
 import { MaterialInScreen } from './screens/material-in';
 import { MovementScreen } from './screens/movement';
 import { QuickReceiveScreen } from './screens/quick-receive';
+import { ReportScreen, ReportsScreen } from './screens/reports';
 import { StockDetailScreen, StockScreen } from './screens/stock';
 import { PostedScreen, TransactionsScreen } from './screens/transactions';
 import { Banner, Button, Loading, styles } from './ui';
@@ -32,6 +33,10 @@ function RouteView({ route }: { route: Route }) {
       return <MovementScreen kind="return" />;
     case 'transactions':
       return <TransactionsScreen />;
+    case 'reports':
+      return <ReportsScreen />;
+    case 'report':
+      return <ReportScreen reportKey={route.key} />;
     case 'posted':
       return <PostedScreen posting={route.posting} title={route.title} />;
   }

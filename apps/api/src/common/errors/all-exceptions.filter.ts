@@ -7,8 +7,9 @@ import {
 } from '@nestjs/common';
 import { Prisma, ProjectScopeError } from '@kavach/db';
 import type { ApiErrorBody, ErrorCode } from '@kavach/shared';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { ZodError } from 'zod';
+import { requestIdOf } from '../../app.setup';
 import { DomainError } from './domain-error';
 
 const STATUS_CODES: Record<number, ErrorCode> = {
@@ -27,11 +28,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const res = host.switchToHttp().getResponse<Response>();
-    const { status, body } = this.map(exception);
+    const { status, body } = this.map(
+      exception,
+      requestIdOf(host.switchToHttp().getRequest<Request>()),
+    );
     res.status(status).json(body);
   }
 
-  private map(e: unknown): { status: number; body: ApiErrorBody } {
+  private map(e: unknown, requestId: string): { status: number; body: ApiErrorBody } {
     if (e instanceof DomainError) {
       return {
         status: e.status,
@@ -74,8 +78,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
         return { status: 404, body: { error: { code: 'NOT_FOUND', message: 'Not found.' } } };
       }
     }
-    if (e instanceof ProjectScopeError) this.logger.error(`ISOLATION BUG: ${e.message}`, e.stack);
-    else this.logger.error(e instanceof Error ? (e.stack ?? e.message) : String(e));
+    // The same id is in the X-Request-Id header the client received and in the request log.
+    if (e instanceof ProjectScopeError) {
+      this.logger.error(`[${requestId}] ISOLATION BUG: ${e.message}`, e.stack);
+    } else {
+      this.logger.error(
+        `[${requestId}] ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`,
+      );
+    }
     return {
       status: 500,
       body: { error: { code: 'INTERNAL', message: 'Something went wrong. Please try again.' } },

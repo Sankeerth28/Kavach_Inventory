@@ -20,7 +20,10 @@
     "db:migrate": "pnpm --filter @kavach/db migrate",
     "db:seed": "turbo run build --filter=@kavach/db && pnpm --filter @kavach/api seed",
     "project:create": "pnpm --filter @kavach/api project:create",
-    "db:deploy": "pnpm --filter @kavach/db migrate:deploy"
+    "db:deploy": "pnpm --filter @kavach/db migrate:deploy",
+    "user:reset-password": "pnpm --filter @kavach/api user:admin reset-password",
+    "user:add-member": "pnpm --filter @kavach/api user:admin add-member",
+    "ops:check": "pnpm --silent --filter @kavach/api ops:check"
   },
   "devDependencies": {
     "dependency-cruiser": "^18.0.0",

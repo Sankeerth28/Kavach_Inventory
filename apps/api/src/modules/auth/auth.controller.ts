@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { Body, Controller, Get, HttpCode, Inject, Post, Req, Res } from '@nestjs/common';
 import {
   type AuthResponse,
@@ -9,6 +8,7 @@ import {
 } from '@kavach/shared';
 import type { Request, Response } from 'express';
 import type { z } from 'zod';
+import { requestIdOf } from '../../app.setup';
 import { Authenticated, Public } from '../../common/auth/access.decorators';
 import { APP_CONFIG, type AppConfig } from '../../common/config';
 import { Auth, type AuthContext } from '../../common/context/request-context';
@@ -30,7 +30,7 @@ function readCookie(req: Request, name: string): string | undefined {
 }
 
 const meta = (req: Request): RequestMeta => ({
-  requestId: randomUUID(),
+  requestId: requestIdOf(req),
   ip: req.ip ?? null,
   userAgent: req.headers['user-agent'] ?? null,
 });

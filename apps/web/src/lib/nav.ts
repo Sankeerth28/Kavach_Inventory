@@ -58,7 +58,6 @@ export const NAV: NavItem[] = [
     label: 'Reports',
     href: '/reports',
     anyOf: ['report:view_all', 'report:view_operational'],
-    phase: 5,
     group: 'Inventory',
   },
 

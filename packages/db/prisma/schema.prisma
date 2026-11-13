@@ -424,6 +424,7 @@ model Material {
   @@unique([projectId, identityKey])
   @@index([projectId, categoryId])
   @@index([projectId, status])
+  @@index([projectId, createdAt]) // New Material Creation Report
   @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "materials_name_trgm")
   @@map("materials")
 }
@@ -470,6 +471,7 @@ model AuditLog {
   actor   User?    @relation("AuditActor", fields: [actorUserId], references: [id])
 
   @@index([projectId, createdAt])
+  @@index([projectId, action, createdAt]) // audit viewer filtered by action
   @@index([entityType, entityId])
   @@index([actorUserId, createdAt])
   @@map("audit_logs")
@@ -652,6 +654,7 @@ model MaterialTransaction {
   @@index([projectId, materialId, createdAt])
   @@index([projectId, locationId, materialId])
   @@index([projectId, createdAt])
+  @@index([projectId, storeId, createdAt]) // store-wise reports over a period
   @@map("material_transactions")
 }
 
@@ -706,6 +709,7 @@ model StockVerification {
 
   @@unique([projectId, id])
   @@index([projectId, status, submittedAt])
+  @@index([projectId, submittedAt]) // Physical Stock Discrepancy Report
   @@map("stock_verifications")
 }
 
@@ -964,6 +968,7 @@ model Invoice {
 
   @@unique([projectId, id])
   @@index([projectId, status, createdAt])
+  @@index([projectId, createdAt]) // AI Processing Report
   @@index([projectId, uploadedById, createdAt])
   @@index([projectId, supplierId, normalizedInvoiceNo])
   @@index([projectId, documentFingerprint])
@@ -1088,4 +1093,15 @@ model AiProcessingLog {
   @@index([projectId, triggeredById, createdAt])
   @@index([invoiceId])
   @@map("ai_processing_logs")
+}
+
+/// Fixed-window counters for rate limiting (login, uploads, exports). Kept in the database so the
+/// limits hold across API instances and restarts without needing Redis.
+model RateLimit {
+  key         String   @id
+  windowStart DateTime @map("window_start") @db.Timestamptz(3)
+  count       Int
+
+  @@index([windowStart])
+  @@map("rate_limits")
 }

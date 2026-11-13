@@ -15,12 +15,12 @@ import { type IssuedTokens, TokenService } from '../../common/auth/token.service
 import type { AuthContext } from '../../common/context/request-context';
 import { DomainError, unauthenticated } from '../../common/errors/domain-error';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { RATE_RULES, RateLimiter } from '../../common/rate-limit/rate-limiter';
 
 export type RequestMeta = Pick<AuthContext, 'requestId' | 'ip' | 'userAgent'>;
 export type AuthResult = Omit<AuthResponse, 'refreshToken'> & { tokens: IssuedTokens };
 
-const MAX_FAILURES = 10;
-const FAILURE_WINDOW_MS = 15 * 60_000;
+const TOO_MANY = 'Too many failed attempts. Try again in 15 minutes.';
 
 /**
  * Authentication is account-level, not project-level, so this service reads users and
@@ -28,19 +28,17 @@ const FAILURE_WINDOW_MS = 15 * 60_000;
  */
 @Injectable()
 export class AuthService {
-  /** Failed logins per identifier. In-memory: enough for one API instance; Phase 5 moves it to Redis. */
-  private readonly failures = new Map<string, { count: number; resetAt: number }>();
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly passwords: PasswordService,
     private readonly tokens: TokenService,
     private readonly audit: AuditService,
+    private readonly limiter: RateLimiter,
   ) {}
 
   async login(identifier: string, password: string, meta: RequestMeta): Promise<AuthResult> {
-    const key = identifier.trim().toLowerCase();
-    this.assertNotLocked(key);
+    const keys = this.limitKeys(identifier, meta.ip);
+    await this.assertNotLocked(keys);
 
     const db = this.prisma.unscoped;
     const user = identifier.includes('@')
@@ -52,7 +50,7 @@ export class AuthService {
       : (await this.passwords.verifyAgainstNothing(password), false);
 
     if (!user || !ok) {
-      this.recordFailure(key);
+      await this.recordFailure(keys);
       await this.audit.writeAccount(db, this.actor(meta, user?.id ?? null), {
         action: 'auth.login_failed',
         entityType: 'user',
@@ -64,7 +62,8 @@ export class AuthService {
     if (user.status !== 'ACTIVE') {
       throw new DomainError('ACCOUNT_DISABLED', 'This account is disabled.', 403);
     }
-    this.failures.delete(key);
+    // A correct password clears this person's count from this address only.
+    await this.limiter.reset(keys.pair);
 
     await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
     await this.audit.writeAccount(db, this.actor(meta, user.id), {
@@ -167,25 +166,42 @@ export class AuthService {
     return { userId, requestId: meta.requestId, ip: meta.ip, userAgent: meta.userAgent };
   }
 
-  private assertNotLocked(key: string): void {
-    const f = this.failures.get(key);
-    if (f && f.resetAt > Date.now() && f.count >= MAX_FAILURES) {
-      throw new DomainError(
-        'RATE_LIMITED',
-        'Too many failed attempts. Try again in 15 minutes.',
-        429,
-      );
+  /**
+   * Failed logins are counted three ways (kept in the database, so the counts hold across API
+   * instances and restarts):
+   * - per login name and address: 10, the lock a person who mistypes meets;
+   * - per address: stops one address from trying many login names;
+   * - per login name from all addresses: a ceiling against a spread-out attack.
+   * Because the first lock is per address, someone who knows a login name cannot lock its owner
+   * out from one address; they would need several.
+   */
+  private limitKeys(identifier: string, ip: string | null) {
+    const id = identifier.trim().toLowerCase().slice(0, 200);
+    const from = ip ?? 'unknown';
+    return { pair: `login:pair:${id}|${from}`, ip: `login:ip:${from}`, id: `login:id:${id}` };
+  }
+
+  private async assertNotLocked(keys: ReturnType<AuthService['limitKeys']>): Promise<void> {
+    const [pair, ip, id] = await Promise.all([
+      this.limiter.count(keys.pair, RATE_RULES.loginPair()),
+      this.limiter.count(keys.ip, RATE_RULES.loginIp()),
+      this.limiter.count(keys.id, RATE_RULES.loginIdentifier()),
+    ]);
+    if (
+      pair >= RATE_RULES.loginPair().limit ||
+      ip >= RATE_RULES.loginIp().limit ||
+      id >= RATE_RULES.loginIdentifier().limit
+    ) {
+      throw new DomainError('RATE_LIMITED', TOO_MANY, 429);
     }
   }
 
-  private recordFailure(key: string): void {
-    const now = Date.now();
-    const f = this.failures.get(key);
-    if (!f || f.resetAt <= now)
-      this.failures.set(key, { count: 1, resetAt: now + FAILURE_WINDOW_MS });
-    else f.count += 1;
-    if (this.failures.size > 10_000) {
-      for (const [k, v] of this.failures) if (v.resetAt <= now) this.failures.delete(k);
-    }
+  /** Only attempts that were actually checked are counted: a refused attempt adds nothing. */
+  private async recordFailure(keys: ReturnType<AuthService['limitKeys']>): Promise<void> {
+    await Promise.all([
+      this.limiter.hit(keys.pair, RATE_RULES.loginPair()),
+      this.limiter.hit(keys.ip, RATE_RULES.loginIp()),
+      this.limiter.hit(keys.id, RATE_RULES.loginIdentifier()),
+    ]);
   }
 }

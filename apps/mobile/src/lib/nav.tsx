@@ -1,4 +1,4 @@
-import type { PostingDto } from '@kavach/shared';
+import type { PostingDto, ReportKey } from '@kavach/shared';
 import {
   type ReactNode,
   createContext,
@@ -24,6 +24,8 @@ export type Route =
   | { name: 'materialOut'; materialId?: string }
   | { name: 'materialReturn' }
   | { name: 'transactions' }
+  | { name: 'reports' }
+  | { name: 'report'; key: ReportKey }
   | { name: 'posted'; posting: PostingDto; title: string };
 
 interface Nav {

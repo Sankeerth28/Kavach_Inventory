@@ -21,7 +21,14 @@ async function bootstrap(): Promise<void> {
   app.enableCors({
     origin: config.webOrigins,
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Project-Id', 'Idempotency-Key', 'X-File-Name'],
+    exposedHeaders: ['X-Request-Id'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Project-Id',
+      'Idempotency-Key',
+      'X-File-Name',
+    ],
   });
 
   const port = Number(process.env.API_PORT ?? 3001);

@@ -57,6 +57,9 @@ export default async function setup(): Promise<() => Promise<void>> {
   process.env.STORAGE_DRIVER = 'local';
   process.env.STORAGE_LOCAL_DIR = path.join(os.tmpdir(), `kavach-api-test-${process.pid}`);
   process.env.DOCUMENT_QUEUE = 'db';
+  // Tests send X-Forwarded-For to act from different addresses (rate limits are per address).
+  process.env.TRUST_PROXY = '1';
+  process.env.REQUEST_LOG = 'off';
 
   return async () => {
     await admin.$executeRawUnsafe(`DROP DATABASE IF EXISTS "${dbName}" WITH (FORCE)`);

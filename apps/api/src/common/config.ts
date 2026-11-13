@@ -14,14 +14,25 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (secret.length < 32) {
     throw new Error('JWT_SECRET must be set to at least 32 characters.');
   }
+  const webOrigins = (env.WEB_ORIGIN ?? 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  if (env.NODE_ENV === 'production') {
+    // PRD §25.2 HTTPS: refuse to start a production API that would send the session over HTTP.
+    if (env.COOKIE_SECURE !== 'true') {
+      throw new Error('In production COOKIE_SECURE must be true (serve the API over HTTPS).');
+    }
+    const plain = webOrigins.filter((o) => !o.startsWith('https://'));
+    if (plain.length > 0) {
+      throw new Error(`In production every WEB_ORIGIN must be https:// (got ${plain.join(', ')}).`);
+    }
+  }
   return {
     jwtSecret: new TextEncoder().encode(secret),
     accessTokenTtlSeconds: 15 * 60,
     refreshTokenTtlDays: 30,
-    webOrigins: (env.WEB_ORIGIN ?? 'http://localhost:3000')
-      .split(',')
-      .map((o) => o.trim())
-      .filter(Boolean),
+    webOrigins,
     cookieSecure: env.COOKIE_SECURE === 'true',
   };
 }

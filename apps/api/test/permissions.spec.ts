@@ -300,13 +300,15 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
     expect(undeclared).toEqual([]);
   });
 
-  it('only health, login, refresh and logout are public', () => {
+  it('only health, readiness, login, refresh and logout are public', () => {
     const open = routes
       .filter((r) => r.rule?.kind === 'public')
       .map((r) => `${r.method} ${r.path}`)
       .sort();
     expect(open).toEqual([
       'GET /health',
+      // Readiness for the load balancer: says only whether the database answers (Phase 5).
+      'GET /health/ready',
       'POST /auth/login',
       'POST /auth/logout',
       'POST /auth/refresh',

@@ -41,6 +41,11 @@ import type {
   PostingDto,
   ProjectDto,
   QuickReceiveInput,
+  ReportDefinition,
+  ReportDto,
+  ReportFormat,
+  ReportKey,
+  ReportQueryInput,
   ReceiptInput,
   ReconciliationDto,
   RejectVerificationInput,
@@ -311,7 +316,7 @@ export function createApiClient(options: ApiClientOptions) {
         post<void>(`/users/${userId}/reset-password`, { password }),
     },
     auditLogs: {
-      list: (query: Omit<AuditListQuery, 'from' | 'to'> = {}) =>
+      list: (query: Omit<AuditListQuery, 'from' | 'to'> & { from?: Date; to?: Date } = {}) =>
         get<Paginated<AuditLogDto>>('/audit-logs', query as Query),
     },
     inventory: {
@@ -395,7 +400,11 @@ export function createApiClient(options: ApiClientOptions) {
         post<InvoiceDetailDto>(`/invoices/${id}/duplicate-override`, { note }),
       /** CONFIRM & RECEIVE. Keep the key for retries: the same key returns the same receipt. */
       confirm: (id: string, version: number, idempotencyKey: string) =>
-        post<PostingDto>(`/invoices/${id}/confirm`, { version }, { 'Idempotency-Key': idempotencyKey }),
+        post<PostingDto>(
+          `/invoices/${id}/confirm`,
+          { version },
+          { 'Idempotency-Key': idempotencyKey },
+        ),
       /**
        * Address and headers of a stored page, for a native image component that loads the file
        * itself (React Native `Image`). Refreshes the session first, so the token is current.
@@ -414,6 +423,35 @@ export function createApiClient(options: ApiClientOptions) {
       /** The stored page, fetched with the session so it never needs a public link. */
       pageContent: (id: string, pageNo: number) =>
         request<Blob>('GET', `/invoices/${id}/pages/${pageNo}/content`, { blob: true }),
+    },
+    /** Reports (PRD §19). The server decides which ones a role may open. */
+    reports: {
+      list: () => get<ReportDefinition[]>('/reports'),
+      run: (key: ReportKey, query: ReportQueryInput = {}) =>
+        get<ReportDto>(`/reports/${key}`, query as Query),
+      /** The Excel or PDF file, fetched with the session. */
+      export: (key: ReportKey, query: ReportQueryInput, format: ReportFormat) =>
+        request<Blob>('GET', `/reports/${key}/export`, {
+          blob: true,
+          query: { ...(query as Query), format },
+        }),
+      /** Address and headers of the file, for a native download that fetches it itself. */
+      exportSource: async (key: ReportKey, query: ReportQueryInput, format: ReportFormat) => {
+        if (!accessToken) await refresh();
+        const headers: Record<string, string> = {};
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+        const projectId = options.getProjectId();
+        if (projectId) headers['X-Project-Id'] = projectId;
+        const all: Query = { ...(query as Query), format };
+        const params = Object.entries(all)
+          .filter(([, v]) => v !== undefined && v !== null && v !== '')
+          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+          .join('&');
+        return {
+          uri: `${options.baseUrl.replace(/\/$/, '')}/reports/${key}/export?${params}`,
+          headers,
+        };
+      },
     },
     aiLogs: {
       list: (query: AiLogListInput = {}) => get<Paginated<AiLogDto>>('/ai-logs', query as Query),

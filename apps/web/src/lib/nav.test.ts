@@ -61,8 +61,10 @@ describe('navigation follows the permission matrices (PRD §3, §20.2, §20.3, Q
     expect(canOpen('/material-out', sm)).toBe(true);
     expect(canOpen('/material-return', sm)).toBe(true);
     expect(canOpen('/transactions', pa)).toBe(true);
-    // Unbuilt later-phase modules remain blocked
-    expect(canOpen('/reports', pa)).toBe(false); // Phase 5
+    // Phase 5: reports for both roles, including a report's own page
+    expect(canOpen('/reports', pa)).toBe(true);
+    expect(canOpen('/reports', sm)).toBe(true);
+    expect(canOpen('/reports/material-movement', sm)).toBe(true);
     // Phase 3 modules: AI processing for both roles, suppliers for the admin, documents under Material In
     expect(canOpen('/ai-processing', pa)).toBe(true);
     expect(canOpen('/ai-processing', sm)).toBe(true);

@@ -50,6 +50,7 @@ import {
 } from '../../common/documents/documents';
 import { DomainError, invalid, notFound } from '../../common/errors/domain-error';
 import { type Db, PrismaService } from '../../common/prisma/prisma.service';
+import { RATE_RULES, RateLimiter } from '../../common/rate-limit/rate-limiter';
 import {
   ITEM_INCLUDE,
   type ItemRow,
@@ -136,6 +137,7 @@ export class InvoicesService {
     private readonly receipts: InvoiceReceiptService,
     private readonly queue: DocumentQueue,
     @Inject(DOCUMENT_STORAGE) private readonly storage: DocumentStorage,
+    private readonly limiter: RateLimiter,
   ) {}
 
   // ── Upload (PRD §7.3 step 1) ───────────────────────────────────────────────
@@ -166,6 +168,12 @@ export class InvoicesService {
     if (body.length > UPLOAD_LIMITS.maxFileBytes) {
       throw new DomainError('FILE_TOO_LARGE', 'The file is larger than 15 MB.', 413);
     }
+    // Every stored file costs storage and an AI call later: one user cannot flood either.
+    await this.limiter.consume(
+      `upload:${ctx.userId}`,
+      RATE_RULES.upload(),
+      'Too many files in a short time. Wait a few minutes and try again.',
+    );
     // The declared content type is not trusted: the type is read from the file itself (PRD §25.2).
     const mimeType = sniffMimeType(body.subarray(0, 16));
     if (!mimeType) {

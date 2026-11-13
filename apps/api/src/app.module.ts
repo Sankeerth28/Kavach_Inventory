@@ -20,6 +20,8 @@ import { LocationsController, LocationsService } from './modules/locations/locat
 import { MaterialsController } from './modules/materials/materials.controller';
 import { MaterialsService } from './modules/materials/materials.service';
 import { ProjectsController, ProjectsService } from './modules/projects/projects';
+import { ReportsController } from './modules/reports/reports.controller';
+import { ReportsService } from './modules/reports/reports.service';
 import { StockController } from './modules/stock/stock.controller';
 import { StockService } from './modules/stock/stock.service';
 import { StoresController, StoresService } from './modules/stores/stores';
@@ -58,6 +60,7 @@ import { VerificationService } from './modules/verification/verification.service
     InvoicesController,
     AiLogsController,
     AiSettingsController,
+    ReportsController,
   ],
   providers: [
     AuthService,
@@ -79,6 +82,7 @@ import { VerificationService } from './modules/verification/verification.service
     InvoiceReceiptService,
     InvoicesService,
     AiLogsService,
+    ReportsService,
     DocumentQueue,
     documentStorageProvider,
   ],

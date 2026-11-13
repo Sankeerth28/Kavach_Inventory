@@ -199,6 +199,9 @@ export function HomeScreen() {
         variant="secondary"
         onPress={() => nav.push({ name: 'transactions' })}
       />
+      {session.can('report:view_all') || session.can('report:view_operational') ? (
+        <Button label="Reports" variant="secondary" onPress={() => nav.push({ name: 'reports' })} />
+      ) : null}
 
       {(me?.memberships.length ?? 0) > 1 ? (
         <Picker

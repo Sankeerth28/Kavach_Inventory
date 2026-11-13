@@ -3,19 +3,27 @@
 import type { AuditLogDto } from '@kavach/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Button, ListState, Modal, PageHeader, Select, Table, Td } from '@/components/ui';
+import { Button, Input, ListState, Modal, PageHeader, Select, Table, Td } from '@/components/ui';
 import { api, errorMessage } from '@/lib/session';
 
 const ENTITY_TYPES = [
   ['', 'Everything'],
+  ['posting', 'Stock postings'],
+  ['stock_verification', 'Stock counts'],
+  ['invoice', 'Scanned documents'],
+  ['invoice_item', 'Document lines'],
   ['material', 'Materials'],
+  ['supplier', 'Suppliers'],
+  ['supplier_mapping', 'Supplier mappings'],
+  ['contractor', 'Contractors'],
   ['category', 'Categories'],
   ['unit', 'Units'],
   ['unit_conversion', 'Conversions'],
   ['location', 'Locations'],
   ['store', 'Stores'],
   ['user', 'Users'],
-  ['project', 'Project'],
+  ['project', 'Project and settings'],
+  ['report', 'Report downloads'],
 ] as const;
 
 /** "material.create" → "Material · create" */
@@ -51,11 +59,21 @@ function Details({ log, onClose }: { log: AuditLogDto; onClose: () => void }) {
 
 export default function AuditLogsPage() {
   const [entityType, setEntityType] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState<AuditLogDto | null>(null);
   const list = useQuery({
-    queryKey: ['audit-logs', { entityType, page }],
-    queryFn: () => api.auditLogs.list({ entityType: entityType || undefined, page, pageSize: 50 }),
+    queryKey: ['audit-logs', { entityType, from, to, page }],
+    queryFn: () =>
+      api.auditLogs.list({
+        entityType: entityType || undefined,
+        // Whole local days, both inclusive.
+        from: from ? new Date(`${from}T00:00:00`) : undefined,
+        to: to ? new Date(`${to}T23:59:59.999`) : undefined,
+        page,
+        pageSize: 50,
+      }),
     placeholderData: keepPreviousData,
   });
   const data = list.data;
@@ -67,21 +85,45 @@ export default function AuditLogsPage() {
         title="Audit Logs"
         description="Every change on this project: who, what and when. Entries cannot be edited or deleted."
         actions={
-          <Select
-            aria-label="Show"
-            className="w-44"
-            value={entityType}
-            onChange={(e) => {
-              setEntityType(e.target.value);
-              setPage(1);
-            }}
-          >
-            {ENTITY_TYPES.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
+          <>
+            <Input
+              aria-label="From"
+              type="date"
+              className="w-40"
+              value={from}
+              max={to || undefined}
+              onChange={(e) => {
+                setFrom(e.target.value);
+                setPage(1);
+              }}
+            />
+            <Input
+              aria-label="To"
+              type="date"
+              className="w-40"
+              value={to}
+              min={from || undefined}
+              onChange={(e) => {
+                setTo(e.target.value);
+                setPage(1);
+              }}
+            />
+            <Select
+              aria-label="Show"
+              className="w-44"
+              value={entityType}
+              onChange={(e) => {
+                setEntityType(e.target.value);
+                setPage(1);
+              }}
+            >
+              {ENTITY_TYPES.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </>
         }
       />
       <ListState

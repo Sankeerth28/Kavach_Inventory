@@ -11,5 +11,6 @@ export * from './inventory';
 export * from './extraction';
 export * from './matching-types';
 export * from './invoice';
+export * from './reports';
 import Decimal from 'decimal.js';
 export { Decimal };

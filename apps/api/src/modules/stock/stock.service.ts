@@ -29,11 +29,7 @@ export class StockService {
     }
 
     const visibleStoreIds =
-      ctx.storeIds === 'ALL'
-        ? undefined
-        : query.storeId
-          ? [query.storeId]
-          : [...ctx.storeIds];
+      ctx.storeIds === 'ALL' ? undefined : query.storeId ? [query.storeId] : [...ctx.storeIds];
 
     const where: Prisma.MaterialWhereInput = {
       projectId: ctx.projectId,
@@ -308,62 +304,59 @@ export class StockService {
     };
   }
 
+  /**
+   * Every balance must equal the sum of its ledger rows (CLAUDE.md invariants 1 and 2).
+   * One grouped query over the ledger, so the check stays usable as the ledger grows.
+   */
   async reconcile(ctx: RequestContext): Promise<ReconciliationDto> {
-    const balances = await this.prisma.db.stockBalance.findMany({
-      where: { projectId: ctx.projectId },
-    });
-
-    const mismatches: ReconciliationDto['mismatches'] = [];
-
-    for (const b of balances) {
-      const txns = await this.prisma.db.materialTransaction.findMany({
-        where: { projectId: ctx.projectId, storeId: b.storeId, materialId: b.materialId },
-      });
-
-      const sums = {
-        AVAILABLE: new Decimal(0),
-        DAMAGED: new Decimal(0),
-        SCRAP: new Decimal(0),
-      };
-
-      for (const t of txns) {
-        sums[t.bucket] = sums[t.bucket].plus(t.quantity.toString());
-      }
-
-      if (!sums.AVAILABLE.equals(b.availableQty.toString())) {
-        mismatches.push({
-          storeId: b.storeId,
-          materialId: b.materialId,
-          bucket: 'AVAILABLE',
-          balance: b.availableQty.toString(),
-          ledgerSum: sums.AVAILABLE.toString(),
-        });
-      }
-
-      if (!sums.DAMAGED.equals(b.damagedQty.toString())) {
-        mismatches.push({
-          storeId: b.storeId,
-          materialId: b.materialId,
-          bucket: 'DAMAGED',
-          balance: b.damagedQty.toString(),
-          ledgerSum: sums.DAMAGED.toString(),
-        });
-      }
-
-      if (!sums.SCRAP.equals(b.scrapQty.toString())) {
-        mismatches.push({
-          storeId: b.storeId,
-          materialId: b.materialId,
-          bucket: 'SCRAP',
-          balance: b.scrapQty.toString(),
-          ledgerSum: sums.SCRAP.toString(),
-        });
-      }
+    const [balances, sums] = await Promise.all([
+      this.prisma.db.stockBalance.findMany({ where: { projectId: ctx.projectId } }),
+      this.prisma.db.materialTransaction.groupBy({
+        by: ['storeId', 'materialId', 'bucket'],
+        where: { projectId: ctx.projectId },
+        _sum: { quantity: true },
+      }),
+    ]);
+    const ledger = new Map<string, Decimal>();
+    for (const g of sums) {
+      ledger.set(
+        `${g.storeId}:${g.materialId}:${g.bucket}`,
+        new Decimal((g._sum.quantity ?? 0).toString()),
+      );
     }
 
-    return {
-      checkedBalances: balances.length * 3,
-      mismatches,
-    };
+    const mismatches: ReconciliationDto['mismatches'] = [];
+    const seen = new Set<string>();
+    for (const b of balances) {
+      const held = { AVAILABLE: b.availableQty, DAMAGED: b.damagedQty, SCRAP: b.scrapQty } as const;
+      for (const bucket of ['AVAILABLE', 'DAMAGED', 'SCRAP'] as const) {
+        const key = `${b.storeId}:${b.materialId}:${bucket}`;
+        seen.add(key);
+        const ledgerSum = ledger.get(key) ?? new Decimal(0);
+        if (!ledgerSum.equals(held[bucket].toString())) {
+          mismatches.push({
+            storeId: b.storeId,
+            materialId: b.materialId,
+            bucket,
+            balance: held[bucket].toString(),
+            ledgerSum: ledgerSum.toString(),
+          });
+        }
+      }
+    }
+    // Ledger rows with no balance row at all would also be a broken projection.
+    for (const [key, ledgerSum] of ledger) {
+      if (seen.has(key) || ledgerSum.isZero()) continue;
+      const [storeId, materialId, bucket] = key.split(':') as [string, string, StockBucket];
+      mismatches.push({
+        storeId,
+        materialId,
+        bucket,
+        balance: '0',
+        ledgerSum: ledgerSum.toString(),
+      });
+    }
+
+    return { checkedBalances: balances.length * 3, mismatches };
   }
 }

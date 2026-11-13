@@ -6,6 +6,7 @@ import { PasswordService } from './auth/password.service';
 import { TokenService } from './auth/token.service';
 import { APP_CONFIG, loadConfig } from './config';
 import { AllExceptionsFilter } from './errors/all-exceptions.filter';
+import { RateLimiter } from './rate-limit/rate-limiter';
 
 /** Cross-cutting providers: config, tokens, passwords, audit, the global guard and error filter. */
 @Global()
@@ -15,9 +16,10 @@ import { AllExceptionsFilter } from './errors/all-exceptions.filter';
     TokenService,
     PasswordService,
     AuditService,
+    RateLimiter,
     { provide: APP_GUARD, useClass: AccessGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
-  exports: [APP_CONFIG, TokenService, PasswordService, AuditService],
+  exports: [APP_CONFIG, TokenService, PasswordService, AuditService, RateLimiter],
 })
 export class CommonModule {}

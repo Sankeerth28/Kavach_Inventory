@@ -12,4 +12,10 @@ export class HealthController {
   check(): HealthResponse {
     return this.health.check();
   }
+
+  @Get('ready')
+  @Public()
+  ready(): Promise<HealthResponse> {
+    return this.health.ready();
+  }
 }

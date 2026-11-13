@@ -1,10 +1,10 @@
-import { randomUUID } from 'node:crypto';
 import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IdSchema, isRoleCode, permissionsForRole } from '@kavach/shared';
 import type { AuthContext, KavachRequest } from '../context/request-context';
 import { DomainError, forbidden, unauthenticated } from '../errors/domain-error';
 import { PrismaService } from '../prisma/prisma.service';
+import { requestIdOf } from '../../app.setup';
 import { ACCESS_KEY, type AccessRule } from './access.decorators';
 import { TokenService } from './token.service';
 
@@ -48,7 +48,7 @@ export class AccessGuard implements CanActivate {
     const auth: AuthContext = {
       userId: user.id,
       userName: user.name,
-      requestId: randomUUID(),
+      requestId: requestIdOf(req),
       ip: req.ip ?? null,
       userAgent: req.headers['user-agent'] ?? null,
     };
