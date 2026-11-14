@@ -2,7 +2,7 @@
 
 AI-powered construction material inventory system: a web app for Project Admins and Store Managers, a mobile app for Store Managers, an API, and a background worker that reads scanned invoices.
 
-This guide gets the project running on your own computer for development and testing. For a real server, follow `docs/DEPLOYMENT.md` instead.
+This guide gets the project running on your own computer for development and testing.
 
 ---
 
@@ -215,7 +215,7 @@ You can leave this alone. Without any AI settings, uploaded invoices fail with a
 | Try the scanning flow **offline, for free**, with the sample documents in `test-docs/` | `AI_PROVIDER=fixture` |
 | Read real documents with OpenAI (costs money) | `OPENAI_API_KEY=...` |
 
-> **Do not send real supplier invoices to OpenAI** until the owner has answered decision Q29 in `docs/DECISIONS.md`.
+> **Do not send real supplier invoices to OpenAI** until sending them has been approved for privacy.
 
 ### 2.5 Create the tables and the demo data
 
@@ -257,7 +257,7 @@ Open http://localhost:3000. The password for every demo account is **`Kavach@123
 | GRN | Project Admin | `admin2@kavach.local` |
 | GRN | Store Manager | `store.grn@kavach.local` |
 
-Try the same task as an admin and as a Store Manager to see the difference in what each role can do. The `docs/USER_GUIDE.md` explains every screen.
+Try the same task as an admin and as a Store Manager to see the difference in what each role can do.
 
 > After 10 wrong passwords from the same computer, signing in is blocked there for 15 minutes.
 
@@ -351,13 +351,4 @@ pnpm --filter @kavach/mobile exec jest src/App.test.tsx
 
 ## 10. Where to read more
 
-| Document | For |
-|---|---|
-| `docs/USER_GUIDE.md` | How to use every screen, for Project Admins and Store Managers |
-| `docs/DEPLOYMENT.md` | Putting KAVACH on a real server |
-| `docs/BACKUP_RESTORE.md` | Backups and how to restore them |
-| `docs/FINAL_VERIFICATION.md` | What has been tested and what still has to be |
-| `docs/PROGRESS.md` | What is built, what is next, known issues |
-| `docs/PRD.md` | The product requirements |
-| `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` | How it is built and why |
-| `docs/CLAUDE.md` | Rules and commands for developers |
+The product requirements are in `docs/PRD.md`.

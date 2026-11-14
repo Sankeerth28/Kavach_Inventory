@@ -14,3 +14,8 @@ next-env.d.ts
 .local/
 .chrome-debug/
 chrome_err.txt
+
+# Personal notes, kept locally only (the PRD stays in the repo)
+/docs/*
+!/docs/PRD.md
+/HOW_TO_START.md
