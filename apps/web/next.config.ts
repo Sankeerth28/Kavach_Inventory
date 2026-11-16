@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
+  /**
+   * Optional same-origin proxy: with API_PROXY_TARGET set (e.g. https://kavach-api.onrender.com),
+   * the browser calls /kapi/... on the web app's own domain, so the SameSite=Strict refresh
+   * cookie works without a shared custom domain. Pair with NEXT_PUBLIC_API_URL=/kapi and
+   * COOKIE_PATH=/kapi/auth on the API.
+   */
+  async rewrites() {
+    const target = process.env.API_PROXY_TARGET?.replace(/\/$/, '');
+    return target ? [{ source: '/kapi/:path*', destination: `${target}/:path*` }] : [];
+  },
 };
 
 export default nextConfig;

@@ -17,7 +17,6 @@ import { zod } from '../../common/validation/zod.pipe';
 import { type AuthResult, AuthService, type RequestMeta } from './auth.service';
 
 const REFRESH_COOKIE = 'kavach_refresh';
-const COOKIE_PATH = '/auth';
 
 function readCookie(req: Request, name: string): string | undefined {
   for (const part of (req.headers.cookie ?? '').split(';')) {
@@ -125,7 +124,7 @@ export class AuthController {
       httpOnly: true,
       secure: this.config.cookieSecure,
       sameSite: 'strict',
-      path: COOKIE_PATH,
+      path: this.config.cookiePath,
       expires: tokens.refreshExpiresAt,
     });
     return body;
@@ -136,7 +135,7 @@ export class AuthController {
       httpOnly: true,
       secure: this.config.cookieSecure,
       sameSite: 'strict',
-      path: COOKIE_PATH,
+      path: this.config.cookiePath,
     });
   }
 }
