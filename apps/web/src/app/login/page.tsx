@@ -34,10 +34,13 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-primary-hover to-sidebar p-4">
+      <Card className="w-full max-w-sm p-8 shadow-2xl">
+        <span className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary text-2xl font-bold text-primary-foreground shadow-sm">
+          K
+        </span>
         <h1 className="text-2xl font-semibold tracking-tight">{APP_NAME}</h1>
-        <p className="mt-1 mb-5 text-sm text-muted-foreground">Construction material inventory</p>
+        <p className="mt-1 mb-6 text-sm text-muted-foreground">Construction material inventory</p>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Field label="E-mail or mobile number">
             {(id) => (

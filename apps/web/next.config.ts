@@ -12,11 +12,23 @@ const securityHeaders = [
   { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), payment=()' },
 ];
 
+/**
+ * Optional: serve the API through this app at /backend, so web and API share one public address
+ * (needed for the SameSite=strict refresh cookie when sharing via a tunnel or a free host).
+ * Set at build time together with NEXT_PUBLIC_API_URL=/backend and the API's COOKIE_PATH=/backend/auth.
+ */
+const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, '');
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
+  },
+  async rewrites() {
+    return apiProxyTarget
+      ? [{ source: '/backend/:path*', destination: `${apiProxyTarget}/:path*` }]
+      : [];
   },
 };
 

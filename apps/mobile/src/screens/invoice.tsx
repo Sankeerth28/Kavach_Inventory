@@ -22,6 +22,7 @@ import {
   Card,
   Field,
   Loading,
+  ModalHeader,
   type Option,
   Picker,
   QuantityField,
@@ -147,10 +148,7 @@ function Pages({ invoice }: { invoice: InvoiceDetailDto }) {
       />
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={styles.screen}>
-          <View style={styles.header}>
-            <Text style={[styles.title, { flex: 1 }]}>Document</Text>
-            <Button label="Close" variant="ghost" onPress={() => setOpen(false)} />
-          </View>
+          <ModalHeader title="Document" onClose={() => setOpen(false)} />
           <ScrollView contentContainerStyle={styles.body} maximumZoomScale={4} minimumZoomScale={1}>
             {images.map((p) =>
               sources[p.pageNo] ? (
@@ -974,10 +972,11 @@ export function InvoiceScreen({ id }: { id: string }) {
         <Modal visible={!!draft} animationType="slide" onRequestClose={() => setDraft(null)}>
           {draft ? (
             <View style={styles.screen}>
-              <View style={styles.header}>
-                <Text style={[styles.title, { flex: 1 }]}>New material</Text>
-                <Button label="Cancel" variant="ghost" onPress={() => setDraft(null)} />
-              </View>
+              <ModalHeader
+                title="New material"
+                closeLabel="Cancel"
+                onClose={() => setDraft(null)}
+              />
               <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
                 {draftItem ? (
                   <Text style={styles.hint}>On the document: {draftItem.description}</Text>

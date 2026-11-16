@@ -5,6 +5,8 @@ export interface AppConfig {
   refreshTokenTtlDays: number;
   webOrigins: string[];
   cookieSecure: boolean;
+  /** Path of the refresh cookie as the browser sees it. `/backend/auth` when the web app proxies the API. */
+  cookiePath: string;
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -34,5 +36,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     refreshTokenTtlDays: 30,
     webOrigins,
     cookieSecure: env.COOKIE_SECURE === 'true',
+    cookiePath: env.COOKIE_PATH?.trim() || '/auth',
   };
 }

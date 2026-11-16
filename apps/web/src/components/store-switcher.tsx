@@ -4,13 +4,7 @@ import { Badge, Select } from '@/components/ui';
 import { useStore } from '@/lib/store-context';
 
 export function StoreSwitcher() {
-  const {
-    selectedStoreId,
-    authorizedStores,
-    canSelectAll,
-    selectStore,
-    isLoading,
-  } = useStore();
+  const { selectedStoreId, authorizedStores, canSelectAll, selectStore, isLoading } = useStore();
 
   if (isLoading) {
     return <span className="text-xs text-muted-foreground">Loading stores…</span>;
@@ -20,7 +14,10 @@ export function StoreSwitcher() {
   if (!canSelectAll && authorizedStores.length === 1 && authorizedStores[0]) {
     const store = authorizedStores[0];
     return (
-      <div className="flex items-center gap-1.5" title={`Active Store: ${store.name} (${store.code})`}>
+      <div
+        className="flex items-center gap-1.5"
+        title={`Active Store: ${store.name} (${store.code})`}
+      >
         <span className="text-xs text-muted-foreground hidden sm:inline">Store:</span>
         <Badge tone="info">
           {store.name} ({store.code})
@@ -39,11 +36,11 @@ export function StoreSwitcher() {
   }
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex min-w-0 items-center gap-1.5">
       <span className="text-xs text-muted-foreground hidden sm:inline">Store:</span>
       <Select
         aria-label="Store selector"
-        className="h-8 w-auto min-w-[130px] max-w-[200px] text-xs py-1"
+        className="h-8 w-auto max-w-[45vw] min-w-0 py-1 text-xs sm:max-w-[200px] sm:min-w-[130px]"
         value={selectedStoreId}
         onChange={(e) => selectStore(e.target.value)}
       >

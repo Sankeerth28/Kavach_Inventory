@@ -1,0 +1,18 @@
+{
+  "cli": {
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "node": "22.23.5",
+      "pnpm": "12.18.0",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://kavach-api.onrender.com"
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { errorMessage } from '../lib/api';
 import { useSession } from '../lib/session';
-import { Banner, Button, Field, styles } from '../ui';
+import { Banner, Button, Field, Hero, styles } from '../ui';
 
 export function LoginScreen() {
   const session = useSession();
@@ -28,39 +28,36 @@ export function LoginScreen() {
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        contentContainerStyle={[styles.body, { paddingTop: 48 }]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={[styles.title, { fontSize: 32 }]}>{APP_NAME}</Text>
-        <Text style={styles.subtitle}>Sign in to manage your store.</Text>
-        <View style={{ height: 12 }} />
-        <Field
-          label="Mobile number or e-mail"
-          value={identifier}
-          onChangeText={setIdentifier}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          textContentType="username"
-        />
-        <Field
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          textContentType="password"
-          onSubmitEditing={() => void submit()}
-        />
-        {error ? <Banner>{error}</Banner> : null}
-        <Button
-          label="Sign in"
-          big
-          busy={busy}
-          disabled={!identifier.trim() || !password}
-          onPress={() => void submit()}
-        />
-        <Text style={styles.hint}>Forgot your password? Ask your Project Admin to reset it.</Text>
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <Hero title={APP_NAME} subtitle="Sign in to manage your store." />
+        <View style={[styles.body, { paddingTop: 28 }]}>
+          <Field
+            label="Mobile number or e-mail"
+            value={identifier}
+            onChangeText={setIdentifier}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            textContentType="username"
+          />
+          <Field
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            textContentType="password"
+            onSubmitEditing={() => void submit()}
+          />
+          {error ? <Banner>{error}</Banner> : null}
+          <Button
+            label="Sign in"
+            big
+            busy={busy}
+            disabled={!identifier.trim() || !password}
+            onPress={() => void submit()}
+          />
+          <Text style={styles.hint}>Forgot your password? Ask your Project Admin to reset it.</Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -92,39 +89,43 @@ export function ChangePasswordScreen() {
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        contentContainerStyle={[styles.body, { paddingTop: 24 }]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.title}>Choose a new password</Text>
-        <Text style={styles.subtitle}>
-          You must change the password you were given before you continue.
-        </Text>
-        <Field label="Current password" value={current} onChangeText={setCurrent} secureTextEntry />
-        <Field
-          label="New password"
-          value={next}
-          onChangeText={setNext}
-          secureTextEntry
-          hint="At least 8 characters, with a letter and a number."
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <Hero
+          title="Choose a new password"
+          subtitle="You must change the password you were given before you continue."
         />
-        <Field
-          label="New password again"
-          value={again}
-          onChangeText={setAgain}
-          secureTextEntry
-          warn={mismatch}
-          hint={mismatch ? 'The two passwords do not match.' : undefined}
-        />
-        {error ? <Banner>{error}</Banner> : null}
-        <Button
-          label="Change password"
-          big
-          busy={busy}
-          disabled={!current || next.length < 8 || next !== again}
-          onPress={() => void submit()}
-        />
-        <Button label="Sign out" variant="ghost" onPress={() => void session.logout()} />
+        <View style={[styles.body, { paddingTop: 28 }]}>
+          <Field
+            label="Current password"
+            value={current}
+            onChangeText={setCurrent}
+            secureTextEntry
+          />
+          <Field
+            label="New password"
+            value={next}
+            onChangeText={setNext}
+            secureTextEntry
+            hint="At least 8 characters, with a letter and a number."
+          />
+          <Field
+            label="New password again"
+            value={again}
+            onChangeText={setAgain}
+            secureTextEntry
+            warn={mismatch}
+            hint={mismatch ? 'The two passwords do not match.' : undefined}
+          />
+          {error ? <Banner>{error}</Banner> : null}
+          <Button
+            label="Change password"
+            big
+            busy={busy}
+            disabled={!current || next.length < 8 || next !== again}
+            onPress={() => void submit()}
+          />
+          <Button label="Sign out" variant="ghost" onPress={() => void session.logout()} />
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

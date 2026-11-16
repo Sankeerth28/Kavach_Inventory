@@ -14,8 +14,8 @@ import { cn } from '@/lib/utils';
 /** Small set of building blocks. Large controls and plain language (PRD §25.4). */
 
 const control =
-  'h-10 w-full rounded-md border border-border bg-surface px-3 text-sm outline-none ' +
-  'focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-60';
+  'h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none transition-colors ' +
+  'focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25 disabled:opacity-60';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -28,14 +28,16 @@ export function Button({ variant = 'primary', size = 'md', className, ...props }
       type="button"
       {...props}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap',
-        'outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap',
+        'transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         'disabled:cursor-not-allowed disabled:opacity-50',
         size === 'md' ? 'h-10 px-4 text-sm' : 'h-8 px-3 text-xs',
-        variant === 'primary' && 'bg-primary text-primary-foreground hover:opacity-90',
-        variant === 'secondary' && 'border border-border bg-surface hover:bg-muted',
-        variant === 'danger' && 'bg-danger text-white hover:opacity-90',
-        variant === 'ghost' && 'hover:bg-muted',
+        variant === 'primary' &&
+          'bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover',
+        variant === 'secondary' &&
+          'border border-primary/30 bg-surface text-primary hover:bg-primary-soft',
+        variant === 'danger' && 'bg-danger text-white shadow-sm hover:opacity-90',
+        variant === 'ghost' && 'hover:bg-primary-soft hover:text-primary',
         className,
       )}
     />
@@ -98,7 +100,7 @@ export function Badge({
         tone === 'success' && 'border-success/40 bg-success/10 text-success',
         tone === 'warning' && 'border-warning/50 bg-warning/15 text-foreground',
         tone === 'danger' && 'border-danger/40 bg-danger/10 text-danger',
-        tone === 'info' && 'border-primary/40 bg-primary/10 text-primary',
+        tone === 'info' && 'border-primary/30 bg-primary-soft text-primary-hover',
       )}
     >
       {children}
@@ -119,10 +121,10 @@ export function Alert({
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
       className={cn(
-        'rounded-md border px-3 py-2 text-sm',
+        'rounded-lg border px-3 py-2 text-sm',
         tone === 'danger' && 'border-danger/40 bg-danger/10',
         tone === 'warning' && 'border-warning/50 bg-warning/15',
-        tone === 'info' && 'border-primary/30 bg-primary/10',
+        tone === 'info' && 'border-primary/30 bg-primary-soft',
         tone === 'success' && 'border-success/40 bg-success/10',
       )}
     >
@@ -134,7 +136,9 @@ export function Alert({
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn('rounded-lg border border-border bg-surface', className)}>{children}</div>
+    <div className={cn('rounded-xl border border-border bg-surface shadow-sm', className)}>
+      {children}
+    </div>
   );
 }
 
@@ -150,7 +154,7 @@ export function PageHeader({
   return (
     <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -176,7 +180,7 @@ export function Modal({
   }, [onClose]);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-sidebar/40 p-4 backdrop-blur-[2px] sm:p-8"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -184,12 +188,12 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'w-full rounded-lg border border-border bg-surface shadow-xl',
+          'w-full overflow-hidden rounded-xl border border-border bg-surface shadow-xl',
           wide ? 'max-w-3xl' : 'max-w-lg',
         )}
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <h2 className="text-base font-semibold">{title}</h2>
+        <div className="flex items-center justify-between border-b border-primary/20 bg-primary-soft/60 px-5 py-3">
+          <h2 className="text-base font-semibold text-primary-hover">{title}</h2>
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
             ✕
           </Button>
@@ -205,7 +209,7 @@ export function Table({ head, children }: { head: ReactNode[]; children: ReactNo
   return (
     <Card className="overflow-x-auto">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+        <thead className="border-b border-primary/15 bg-primary-soft/60 text-xs text-primary-hover uppercase">
           <tr>
             {head.map((h, i) => (
               <th key={i} className="px-4 py-2.5 font-medium whitespace-nowrap">
@@ -214,7 +218,9 @@ export function Table({ head, children }: { head: ReactNode[]; children: ReactNo
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">{children}</tbody>
+        <tbody className="divide-y divide-border [&>tr]:transition-colors [&>tr:hover]:bg-muted/60">
+          {children}
+        </tbody>
       </table>
     </Card>
   );

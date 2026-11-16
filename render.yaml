@@ -1,0 +1,44 @@
+# Render Blueprint: the KAVACH API and document worker on one free web service.
+# Render dashboard → New → Blueprint → pick this repository. See README "Deploy online for free".
+#
+# Free plan limits: sleeps after 15 minutes without visitors (the next visit waits ~1 minute),
+# and uploaded documents are kept on a temporary disk that is wiped on every restart or deploy.
+services:
+  - type: web
+    name: kavach-api
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: >-
+      npm install -g pnpm@12.18.0 &&
+      pnpm install --frozen-lockfile --prod=false &&
+      pnpm turbo run build --filter=@kavach/api --filter=@kavach/worker
+    startCommand: node scripts/start-server.mjs
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: NODE_ENV
+        value: production
+      - key: API_PORT
+        value: '10000'
+      # Neon connection string, e.g. postgresql://user:pass@ep-xxx.aws.neon.tech/neondb?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      # The Vercel address of the web app, e.g. https://kavach-inventory.vercel.app
+      - key: WEB_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: 'true'
+      # The web app serves the API at /backend (apps/web/next.config.ts).
+      - key: COOKIE_PATH
+        value: /backend/auth
+      - key: TRUST_PROXY
+        value: '1'
+      - key: STORAGE_DRIVER
+        value: local
+      - key: DOCUMENT_QUEUE
+        value: db

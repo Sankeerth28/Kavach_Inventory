@@ -14,13 +14,16 @@ import {
 import { useNav } from './lib/nav';
 
 /** Large, touch-friendly building blocks with plain language (PRD §21.5, §25.4). */
+/** Teal and white theme. Change the brand colour here only. */
 export const colors = {
-  bg: '#f4f5f7',
+  bg: '#f3faf9',
   surface: '#ffffff',
-  border: '#d5d9e0',
-  text: '#16202e',
-  muted: '#5c6878',
-  primary: '#1d4ed8',
+  border: '#cfe5e1',
+  text: '#0f2a2c',
+  muted: '#55707a',
+  primary: '#0f766e',
+  primaryDark: '#115e59',
+  primarySoft: '#ccfbf1',
   primaryText: '#ffffff',
   success: '#15803d',
   successBg: '#dcfce7',
@@ -28,13 +31,13 @@ export const colors = {
   warningBg: '#fef3c7',
   danger: '#b91c1c',
   dangerBg: '#fee2e2',
-  infoBg: '#dbeafe',
+  infoBg: '#ccfbf1',
 };
 
 export type Tone = 'neutral' | 'success' | 'warning' | 'danger' | 'info';
 
 const toneColors: Record<Tone, { bg: string; fg: string }> = {
-  neutral: { bg: '#e8ebf0', fg: colors.muted },
+  neutral: { bg: '#e3f1ee', fg: colors.muted },
   success: { bg: colors.successBg, fg: colors.success },
   warning: { bg: colors.warningBg, fg: colors.warning },
   danger: { bg: colors.dangerBg, fg: colors.danger },
@@ -71,10 +74,10 @@ export function Screen({
           </Pressable>
         ) : null}
         <View style={{ flex: 1 }}>
-          <Text style={styles.title} accessibilityRole="header">
+          <Text style={styles.headerTitle} accessibilityRole="header">
             {title}
           </Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          {subtitle ? <Text style={styles.headerSubtitle}>{subtitle}</Text> : null}
         </View>
       </View>
       {scroll ? (
@@ -85,6 +88,49 @@ export function Screen({
         <View style={[styles.body, { flex: 1 }]}>{children}</View>
       )}
       {footer ? <View style={styles.footer}>{footer}</View> : null}
+    </View>
+  );
+}
+
+/** Teal title bar for full-screen modals, with a close action on the right. */
+export function ModalHeader({
+  title,
+  onClose,
+  closeLabel = 'Close',
+}: {
+  title: string;
+  onClose: () => void;
+  closeLabel?: string;
+}) {
+  return (
+    <View style={styles.header}>
+      <Text style={[styles.headerTitle, { flex: 1 }]} accessibilityRole="header">
+        {title}
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={closeLabel}
+        onPress={onClose}
+        hitSlop={12}
+        style={styles.headerAction}
+      >
+        <Text style={styles.headerActionText}>{closeLabel}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+/** Teal brand band for screens without a navigation header (sign-in, first password). */
+export function Hero({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <View style={styles.hero}>
+      <View style={styles.heroMark}>
+        <Text style={styles.heroMarkText}>K</Text>
+      </View>
+      <Text style={styles.heroTitle} accessibilityRole="header">
+        {title}
+      </Text>
+      {subtitle ? <Text style={styles.heroSubtitle}>{subtitle}</Text> : null}
     </View>
   );
 }
@@ -315,11 +361,8 @@ export function Picker({
       </Pressable>
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={styles.screen}>
-          <View style={styles.header}>
-            <Text style={[styles.title, { flex: 1 }]}>{label}</Text>
-            <Button label="Close" variant="ghost" onPress={() => setOpen(false)} />
-          </View>
-          <View style={{ paddingHorizontal: 16 }}>
+          <ModalHeader title={label} onClose={() => setOpen(false)} />
+          <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
             <TextInput
               accessibilityLabel={`Search ${label}`}
               placeholder="Search"
@@ -424,26 +467,60 @@ export function Segments<T extends string>({
 }
 
 export const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  screen: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingTop: 52,
+    paddingBottom: 16,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: colors.primaryText },
+  headerSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+  headerAction: {
+    minHeight: 40,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  headerActionText: { fontSize: 15, fontWeight: '700', color: colors.primaryText },
   back: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 22,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
-  backText: { fontSize: 30, lineHeight: 32, color: colors.primary },
+  backText: { fontSize: 30, lineHeight: 32, color: colors.primaryText },
+  hero: {
+    backgroundColor: colors.primary,
+    paddingTop: 72,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+  },
+  heroMark: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  heroMarkText: { fontSize: 28, fontWeight: '800', color: colors.primary },
+  heroTitle: { fontSize: 30, fontWeight: '800', color: colors.primaryText },
+  heroSubtitle: { fontSize: 15, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
   title: { fontSize: 22, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: 14, color: colors.muted, marginTop: 2 },
-  body: { padding: 16, gap: 12, paddingBottom: 32 },
+  body: { padding: 16, paddingTop: 20, gap: 12, paddingBottom: 32 },
   footer: {
     padding: 16,
     gap: 8,
@@ -462,7 +539,7 @@ export const styles = StyleSheet.create({
   buttonText: { fontSize: 16, fontWeight: '700' },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 14,

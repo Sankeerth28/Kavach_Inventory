@@ -53,26 +53,35 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen">
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-40 w-60 shrink-0 overflow-y-auto border-r border-border bg-surface',
-            'transition-transform md:static md:translate-x-0',
+            'fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col overflow-y-auto bg-sidebar text-sidebar-foreground',
+            '[scrollbar-color:rgb(255_255_255/0.25)_transparent] [scrollbar-width:thin]',
+            'transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0',
             menuOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
-          <div className="px-5 py-4 text-lg font-semibold tracking-tight">{APP_NAME}</div>
+          <div className="flex items-center gap-3 px-5 py-5">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-white text-lg font-bold text-primary shadow-sm">
+              K
+            </span>
+            <div className="leading-tight">
+              <p className="text-lg font-semibold tracking-wide">{APP_NAME}</p>
+              <p className="text-xs text-sidebar-muted">Material inventory</p>
+            </div>
+          </div>
           <nav className="px-3 pb-6" aria-label="Main">
             {GROUPS.map((group) => {
               const inGroup = items.filter((i) => i.group === group);
               if (inGroup.length === 0) return null;
               return (
                 <div key={group} className="mb-4">
-                  <p className="px-2 pb-1 text-xs font-medium text-muted-foreground uppercase">
+                  <p className="px-3 pb-1 text-[11px] font-semibold tracking-wider text-sidebar-muted uppercase">
                     {group}
                   </p>
                   {inGroup.map((item) =>
                     item.phase ? (
                       <span
                         key={item.href}
-                        className="flex items-center justify-between rounded-md px-2 py-2 text-sm text-muted-foreground"
+                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-sidebar-muted/70"
                         title={`Arrives in Phase ${item.phase}`}
                       >
                         {item.label}
@@ -85,8 +94,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         onClick={() => setMenuOpen(false)}
                         aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
                         className={cn(
-                          'block rounded-md px-2 py-2 text-sm hover:bg-muted',
-                          pathname.startsWith(item.href) && 'bg-primary/10 font-medium text-primary',
+                          'block rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/10',
+                          pathname.startsWith(item.href) &&
+                            'bg-white font-medium text-primary shadow-sm hover:bg-white',
                         )}
                       >
                         {item.label}
@@ -97,16 +107,25 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
+          <div className="mt-auto border-t border-white/10 px-3 py-4">
+            <Link
+              href="/change-password"
+              onClick={() => setMenuOpen(false)}
+              className="block rounded-lg px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-white/10 hover:text-sidebar-foreground"
+            >
+              Change password
+            </Link>
+          </div>
         </aside>
         {menuOpen && (
           <div
-            className="fixed inset-0 z-30 bg-black/30 md:hidden"
+            className="fixed inset-0 z-30 bg-sidebar/40 md:hidden"
             onClick={() => setMenuOpen(false)}
           />
         )}
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
+          <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b border-border bg-surface/95 px-3 shadow-sm backdrop-blur sm:gap-3 sm:px-6">
             <Button
               variant="ghost"
               size="sm"
@@ -132,52 +151,61 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             ) : (
               <span className="truncate text-sm font-medium">{membership.projectName}</span>
             )}
-            <span className="text-border">|</span>
+            <span className="hidden text-border sm:inline">|</span>
             <StoreSwitcher />
-            <div className="ml-auto flex items-center gap-2">
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="Notifications"
-                aria-expanded={bellOpen}
-                onClick={() => setBellOpen((v) => !v)}
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Notifications"
+                  aria-expanded={bellOpen}
+                  onClick={() => setBellOpen((v) => !v)}
+                >
+                  🔔
+                </Button>
+                {bellOpen && (
+                  <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-surface p-4 text-sm shadow-lg">
+                    <p className="font-medium">Notifications</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Nothing yet. Low stock and pending approvals will appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
+              <span
+                aria-hidden
+                className="hidden size-9 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary-hover sm:flex"
               >
-                🔔
+                {me.user.name.trim().charAt(0).toUpperCase()}
+              </span>
+              <div className="hidden text-left sm:block">
+                <p className="text-sm leading-tight font-medium">{me.user.name}</p>
+                <p className="text-xs leading-tight text-muted-foreground">{membership.roleName}</p>
+              </div>
+              <Link
+                href="/change-password"
+                className="hidden text-xs text-muted-foreground hover:text-primary hover:underline sm:inline"
+              >
+                Password
+              </Link>
+              <Button variant="secondary" size="sm" onClick={() => void session.logout()}>
+                Sign out
               </Button>
-              {bellOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-md border border-border bg-surface p-4 text-sm shadow-lg">
-                  <p className="font-medium">Notifications</p>
-                  <p className="mt-1 text-muted-foreground">
-                    Nothing yet. Low stock and pending approvals will appear here.
-                  </p>
-                </div>
-              )}
             </div>
-            <div className="hidden text-right sm:block">
-              <p className="text-sm leading-tight font-medium">{me.user.name}</p>
-              <p className="text-xs leading-tight text-muted-foreground">{membership.roleName}</p>
-            </div>
-            <Link href="/change-password" className="text-xs text-muted-foreground hover:underline">
-              Password
-            </Link>
-            <Button variant="secondary" size="sm" onClick={() => void session.logout()}>
-              Sign out
-            </Button>
-          </div>
-        </header>
-        <main className="min-w-0 flex-1 p-4 sm:p-6">
-          {allowed ? (
-            children
-          ) : (
-            <Alert tone="warning" title="Not available">
-              Your role ({membership.roleName}) does not include this page.{' '}
-              <Badge>{pathname}</Badge>
-            </Alert>
-          )}
-        </main>
+          </header>
+          <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+            {allowed ? (
+              children
+            ) : (
+              <Alert tone="warning" title="Not available">
+                Your role ({membership.roleName}) does not include this page.{' '}
+                <Badge>{pathname}</Badge>
+              </Alert>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
     </StoreProvider>
   );
 }

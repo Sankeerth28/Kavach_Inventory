@@ -62,28 +62,28 @@ export function HomeScreen() {
       hint: 'Scan invoice',
       route: { name: 'materialIn' } as const,
       show: canIn,
-      color: '#15803d',
+      color: '#0f766e',
     },
     {
       label: 'Material Out',
       hint: 'Issue to site',
       route: { name: 'materialOut' } as const,
       show: canOut,
-      color: '#1d4ed8',
+      color: '#0e7490',
     },
     {
       label: 'Return',
       hint: 'From site',
       route: { name: 'materialReturn' } as const,
       show: canReturn,
-      color: '#b45309',
+      color: '#115e59',
     },
     {
       label: 'View Stock',
       hint: 'Search materials',
       route: { name: 'stock' } as const,
       show: true,
-      color: '#475569',
+      color: '#134e4a',
     },
   ].filter((a) => a.show);
 

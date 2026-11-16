@@ -13,6 +13,7 @@ coverage/
 next-env.d.ts
 .local/
 .chrome-debug/
+.swc-cache/
 chrome_err.txt
 
 # Personal notes, kept locally only (the PRD stays in the repo)

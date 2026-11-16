@@ -11,7 +11,7 @@ import { QuickReceiveScreen } from './screens/quick-receive';
 import { ReportScreen, ReportsScreen } from './screens/reports';
 import { StockDetailScreen, StockScreen } from './screens/stock';
 import { PostedScreen, TransactionsScreen } from './screens/transactions';
-import { Banner, Button, Loading, styles } from './ui';
+import { Banner, Button, Hero, Loading, styles } from './ui';
 
 function RouteView({ route }: { route: Route }) {
   switch (route.name) {
@@ -47,6 +47,7 @@ function Root() {
   if (session.status === 'loading') {
     return (
       <View style={styles.screen}>
+        <Hero title="KAVACH" />
         <Loading text="Starting…" />
       </View>
     );
@@ -55,9 +56,14 @@ function Root() {
   if (session.me?.user.mustChangePassword) return <ChangePasswordScreen />;
   if (!session.membership) {
     return (
-      <View style={[styles.screen, styles.body]}>
-        <Banner tone="warning">You are not a member of any project. Ask your Project Admin.</Banner>
-        <Button label="Sign out" variant="secondary" onPress={() => void session.logout()} />
+      <View style={styles.screen}>
+        <Hero title="No project" />
+        <View style={styles.body}>
+          <Banner tone="warning">
+            You are not a member of any project. Ask your Project Admin.
+          </Banner>
+          <Button label="Sign out" variant="secondary" onPress={() => void session.logout()} />
+        </View>
       </View>
     );
   }
@@ -73,7 +79,7 @@ export default function App() {
   return (
     <SessionProvider>
       <Root />
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
     </SessionProvider>
   );
 }

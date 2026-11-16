@@ -115,6 +115,110 @@ More problems and fixes are in [section 9](#9-troubleshooting). The rest of this
 
 ---
 
+## Share a prototype link (web and mobile)
+
+Gives other people a public `https://…trycloudflare.com` link to your running app, for demos. Free and needs no account. **The link only works while your computer is on and the window stays open**, and it changes every time you start it.
+
+**One time only:** install Cloudflare's tunnel tool, then close and reopen the terminal:
+
+```powershell
+winget install --id Cloudflare.cloudflared
+```
+
+**Every time you want to share:**
+
+1. Start the database (step 2 above). Stop `pnpm dev` if it is running (Ctrl + C).
+2. Run:
+   ```powershell
+   pnpm share
+   ```
+   It builds the app (1–3 minutes), then prints a box with your link. Send that link to anyone: it opens the web app on a computer or a phone browser.
+3. **Mobile app (optional):** in a **second** terminal in the same folder, run:
+   ```powershell
+   pnpm share:mobile
+   ```
+   Viewers install **Expo Go** from the Play Store or the App Store and scan the QR code it shows (Android: inside Expo Go; iPhone: with the Camera app). The first time, Expo may ask to install `@expo/ngrok`: answer **Y**.
+4. Ctrl + C in each window stops sharing.
+
+Demo logins: `admin@kavach.local` (Project Admin) and `store@kavach.local` (Store Manager), password `Kavach@123`. Anyone with the link can see the demo data, so do not load real data while sharing.
+
+How it works: `pnpm share` serves the API through the web app at `/backend` (`API_PROXY_TARGET`, `NEXT_PUBLIC_API_URL=/backend`, `COOKIE_PATH=/backend/auth`), so web and API share one address and the sign-in cookie keeps working. For a link that works with your computer off, see the next section.
+
+---
+
+## Deploy online for free (Neon + Render + Vercel)
+
+A permanent prototype link for the team, on free plans. Three free accounts, all "Sign up with GitHub":
+
+```
+ Teammates ──► Vercel (web app) ──/backend──► Render (API + AI worker) ──► Neon (database)
+ Android app (APK) ─────────────────────────► Render
+```
+
+| Part | Service | Config in this repo |
+|---|---|---|
+| Database | [Neon](https://neon.tech) | none |
+| API + worker | [Render](https://render.com) | `render.yaml`, `scripts/start-server.mjs` |
+| Web app | [Vercel](https://vercel.com) | `apps/web/vercel.json` |
+| Android app | [Expo EAS](https://expo.dev) | `apps/mobile/eas.json` |
+
+**Free-plan limits, tell your team:**
+- The API sleeps after 15 minutes without visitors. The first visit after that takes about a minute; if the page shows an error, wait and refresh.
+- Uploaded invoice files are lost when Render restarts or redeploys (the data in the database stays).
+- AI invoice reading is off until you add an `OPENAI_API_KEY` on Render (paid; see DECISIONS Q29). Without it, lines are typed in by hand.
+- Web uploads pass through Vercel and may be refused above about 4.5 MB per file. The Android app uploads straight to Render.
+- Vercel's free plan is meant for non-commercial use; for a company prototype that's usually fine short-term, but check before going live.
+
+### Step 1. Database (Neon)
+1. Sign up at neon.tech → **Create project**: name `kavach`, Postgres 16 or later, region **AWS Asia Pacific (Singapore)**.
+2. On the dashboard click **Connect**, turn **Connection pooling off**, and copy the connection string. It looks like `postgresql://neondb_owner:…@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`.
+3. On your computer, in PowerShell in the project folder, create the tables and the demo data in Neon:
+   ```powershell
+   $env:DATABASE_URL = "PASTE-THE-NEON-STRING-HERE"
+   pnpm db:deploy
+   pnpm db:seed
+   Remove-Item Env:DATABASE_URL
+   ```
+   The last line switches this terminal back to your local database.
+
+### Step 2. API (Render)
+1. Sign up at render.com → **New** → **Blueprint** → connect GitHub → pick this repository. Render reads `render.yaml`.
+2. It asks for two values:
+   - `DATABASE_URL`: the Neon string from step 1.
+   - `WEB_ORIGIN`: `https://kavach-inventory.vercel.app` (the Vercel name you will pick in step 3; change it later if Vercel gives a different address).
+3. Click **Apply**. The first build takes 5–10 minutes.
+4. Open the service, copy its address (for example `https://kavach-api.onrender.com`), and open `<that address>/health` in the browser. You should see `{"status":"ok","service":"api"}`.
+
+### Step 3. Web app (Vercel)
+1. Sign up at vercel.com → **Add New… → Project** → import this repository.
+2. **Project Name**: `kavach-inventory`. **Root Directory**: click *Edit* and choose `apps/web`.
+3. **Environment Variables**, add three:
+   | Name | Value |
+   |---|---|
+   | `NEXT_PUBLIC_API_URL` | `/backend` |
+   | `API_PROXY_TARGET` | the Render address from step 2, e.g. `https://kavach-api.onrender.com` |
+   | `ENABLE_EXPERIMENTAL_COREPACK` | `1` |
+4. Click **Deploy**. When it finishes, open the address it shows. If it is not `https://kavach-inventory.vercel.app`, put the real one in `WEB_ORIGIN` on Render (*Environment* tab → Save, Render restarts).
+5. Sign in with `admin@kavach.local` / `Kavach@123` and send the link to your team. Because this link is public, change the demo passwords (or create real users with `pnpm project:create` against Neon) before sharing widely.
+
+### Step 4. Android app (optional)
+1. If your Render address is not `https://kavach-api.onrender.com`, put it in `apps/mobile/eas.json` (`EXPO_PUBLIC_API_URL`).
+2. Sign up at expo.dev, then in PowerShell:
+   ```powershell
+   npm install -g eas-cli
+   cd apps\mobile
+   eas login
+   eas init
+   eas build --platform android --profile preview
+   ```
+   Answer **Y** to the questions. After about 15 minutes it prints a link to an `.apk` file. Send that link to Android teammates: they open it on the phone and allow "install unknown apps".
+3. iPhone users open the Vercel link in Safari (installing iPhone apps outside the App Store needs a paid Apple developer account).
+
+### Updating the online version
+Push to the deployed branch on GitHub. Vercel and Render rebuild automatically, and Render applies new database migrations when it starts. Rebuild the Android app (`eas build …`) only when the mobile code changed.
+
+---
+
 ## Contents
 
 1. [What you need](#1-what-you-need)

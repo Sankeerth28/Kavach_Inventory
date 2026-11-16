@@ -23,7 +23,9 @@
     "db:deploy": "pnpm --filter @kavach/db migrate:deploy",
     "user:reset-password": "pnpm --filter @kavach/api user:admin reset-password",
     "user:add-member": "pnpm --filter @kavach/api user:admin add-member",
-    "ops:check": "pnpm --silent --filter @kavach/api ops:check"
+    "ops:check": "pnpm --silent --filter @kavach/api ops:check",
+    "share": "node scripts/share.mjs",
+    "share:mobile": "node scripts/share-mobile.mjs"
   },
   "devDependencies": {
     "dependency-cruiser": "^18.0.0",

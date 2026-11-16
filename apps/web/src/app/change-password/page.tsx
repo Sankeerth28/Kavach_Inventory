@@ -38,8 +38,8 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-primary-hover to-sidebar p-4">
+      <Card className="w-full max-w-sm p-8 shadow-2xl">
         <h1 className="text-xl font-semibold tracking-tight">Change password</h1>
         <p className="mt-1 mb-5 text-sm text-muted-foreground">
           {forced
