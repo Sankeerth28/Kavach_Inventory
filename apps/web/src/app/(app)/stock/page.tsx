@@ -4,7 +4,19 @@ import type { StockRowDto, StockStatus } from '@kavach/shared';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Alert, Badge, Button, Card, Field, Input, ListState, PageHeader, Select, Table, Td } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  ListState,
+  PageHeader,
+  Select,
+  Table,
+  Td,
+} from '@/components/ui';
 import { api, errorMessage, useSession } from '@/lib/session';
 import { useStore } from '@/lib/store-context';
 import { cn } from '@/lib/utils';
@@ -72,12 +84,7 @@ export default function StockListPage() {
         }
         actions={
           canReconcile ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleReconcile}
-              disabled={reconciling}
-            >
+            <Button variant="secondary" size="sm" onClick={handleReconcile} disabled={reconciling}>
               {reconciling ? 'Checking Ledger…' : '⚖️ Reconcile Ledger'}
             </Button>
           ) : undefined
@@ -109,11 +116,7 @@ export default function StockListPage() {
 
           <Field label="Category">
             {(id) => (
-              <Select
-                id={id}
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
+              <Select id={id} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                 <option value="">All Categories</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>

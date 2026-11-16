@@ -28,7 +28,7 @@ If any one of them is not running, you will see a blank page, an error, or a log
    ```powershell
    node -v
    ```
-   It must print `v22.something`. If it prints anything else (like `v25.0.0`), run `nvm use 22.23.5` in a terminal opened **as Administrator** (right-click PowerShell, *Run as administrator*), then close it and open a normal terminal again.
+   It must print `v22.something`. If it prints anything else (like `v25.0.0`), run `nvm use 22.23.5` in a terminal opened **as Administrator** (right-click PowerShell, _Run as administrator_), then close it and open a normal terminal again.
 
 ### Step 2. Start the database
 
@@ -40,7 +40,7 @@ Use **one** of these, depending on how your database was set up.
 & "C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe" -D .local\pg -l .local\pg\pg.log -o "-p 5433" start
 ```
 
-It prints `server started`. If it says *another server might be running*, that is fine: it was already on.
+It prints `server started`. If it says _another server might be running_, that is fine: it was already on.
 
 **B. Docker** (Docker Desktop must be open first):
 
@@ -100,16 +100,16 @@ Only three things:
 
 ### It doesn't work?
 
-| What you see | What it means and what to do |
-|---|---|
-| Browser says *This site can't be reached* on `localhost:3000` | The app is not running. Run `pnpm dev` and wait for `Ready`. Keep that window open. |
-| Sign-in page opens, but signing in fails or spins forever | The API is not running or crashed. Open http://localhost:3001/health. If it doesn't show `ok`, scroll up in the `pnpm dev` window and look for a red error. |
-| `Can't reach database server` in the terminal | The database is not running. Do step 2 again. |
-| `Unsupported engine` or *wanted node >=22.12 <23* | Wrong Node.js version. See step 1. |
-| `pnpm` is not recognized | Install it once: `npm install -g pnpm@12`, then open a new terminal. |
-| `JWT_SECRET must be set` | Your `.env` file is missing or incomplete. See [section 2.2](#22-create-your-env-file). |
-| `The table ... does not exist` | Run `pnpm db:deploy`. |
-| *Port 3000 (or 3001) is already in use* | The app is already running in another terminal window. Use that one, or close it first. |
+| What you see                                                  | What it means and what to do                                                                                                                                |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser says _This site can't be reached_ on `localhost:3000` | The app is not running. Run `pnpm dev` and wait for `Ready`. Keep that window open.                                                                         |
+| Sign-in page opens, but signing in fails or spins forever     | The API is not running or crashed. Open http://localhost:3001/health. If it doesn't show `ok`, scroll up in the `pnpm dev` window and look for a red error. |
+| `Can't reach database server` in the terminal                 | The database is not running. Do step 2 again.                                                                                                               |
+| `Unsupported engine` or _wanted node >=22.12 <23_             | Wrong Node.js version. See step 1.                                                                                                                          |
+| `pnpm` is not recognized                                      | Install it once: `npm install -g pnpm@12`, then open a new terminal.                                                                                        |
+| `JWT_SECRET must be set`                                      | Your `.env` file is missing or incomplete. See [section 2.2](#22-create-your-env-file).                                                                     |
+| `The table ... does not exist`                                | Run `pnpm db:deploy`.                                                                                                                                       |
+| _Port 3000 (or 3001) is already in use_                       | The app is already running in another terminal window. Use that one, or close it first.                                                                     |
 
 More problems and fixes are in [section 9](#9-troubleshooting). The rest of this README is the full reference.
 
@@ -132,13 +132,13 @@ More problems and fixes are in [section 9](#9-troubleshooting). The rest of this
 
 ## 1. What you need
 
-| Tool | Version | Notes |
-|---|---|---|
-| Node.js | **22 LTS only** | The repo refuses any other major version. With nvm: `nvm install 22` then `nvm use 22`. |
-| pnpm | 12 | `npm install -g pnpm@12` |
-| PostgreSQL | 15 or later | Either Docker (easiest) or a PostgreSQL you install yourself. |
-| Docker Desktop | optional | Starts PostgreSQL, Redis and MinIO in one command. |
-| Expo Go app | optional | On your phone, only if you want to try the mobile app. |
+| Tool           | Version         | Notes                                                                                   |
+| -------------- | --------------- | --------------------------------------------------------------------------------------- |
+| Node.js        | **22 LTS only** | The repo refuses any other major version. With nvm: `nvm install 22` then `nvm use 22`. |
+| pnpm           | 12              | `npm install -g pnpm@12`                                                                |
+| PostgreSQL     | 15 or later     | Either Docker (easiest) or a PostgreSQL you install yourself.                           |
+| Docker Desktop | optional        | Starts PostgreSQL, Redis and MinIO in one command.                                      |
+| Expo Go app    | optional        | On your phone, only if you want to try the mobile app.                                  |
 
 Redis, MinIO (S3 storage) and an OpenAI key are **not** needed to run the project locally. See [section 2.4](#24-ai-reading-of-invoices-optional).
 
@@ -210,10 +210,10 @@ DATABASE_URL=postgresql://kavach:kavach@localhost:5432/kavach?schema=public
 
 You can leave this alone. Without any AI settings, uploaded invoices fail with a clear message and you type the lines by hand. Everything else works.
 
-| You want | Set in `.env` |
-|---|---|
+| You want                                                                               | Set in `.env`         |
+| -------------------------------------------------------------------------------------- | --------------------- |
 | Try the scanning flow **offline, for free**, with the sample documents in `test-docs/` | `AI_PROVIDER=fixture` |
-| Read real documents with OpenAI (costs money) | `OPENAI_API_KEY=...` |
+| Read real documents with OpenAI (costs money)                                          | `OPENAI_API_KEY=...`  |
 
 > **Do not send real supplier invoices to OpenAI** until sending them has been approved for privacy.
 
@@ -236,12 +236,12 @@ pnpm dev
 
 This starts everything together:
 
-| App | Address | What it is |
-|---|---|---|
-| Web app | http://localhost:3000 | Open this in your browser |
-| API | http://localhost:3001 | Used by the web and mobile apps. Check it at http://localhost:3001/health |
-| Worker | (no address) | Reads uploaded invoices in the background |
-| Mobile (Expo) | shows a QR code in the terminal | See [section 6](#6-run-the-mobile-app-on-a-phone) |
+| App           | Address                         | What it is                                                                |
+| ------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| Web app       | http://localhost:3000           | Open this in your browser                                                 |
+| API           | http://localhost:3001           | Used by the web and mobile apps. Check it at http://localhost:3001/health |
+| Worker        | (no address)                    | Reads uploaded invoices in the background                                 |
+| Mobile (Expo) | shows a QR code in the terminal | See [section 6](#6-run-the-mobile-app-on-a-phone)                         |
 
 Stop everything with **Ctrl + C**.
 
@@ -249,13 +249,13 @@ Stop everything with **Ctrl + C**.
 
 Open http://localhost:3000. The password for every demo account is **`Kavach@123`**.
 
-| Project | Role | Login (e-mail or mobile) |
-|---|---|---|
-| SKY | Project Admin | `admin@kavach.local` |
-| SKY | Store Manager (one store) | `store@kavach.local` or `9000000001` |
-| SKY | Store Manager (two stores) | `store2@kavach.local` or `9000000002` |
-| GRN | Project Admin | `admin2@kavach.local` |
-| GRN | Store Manager | `store.grn@kavach.local` |
+| Project | Role                       | Login (e-mail or mobile)              |
+| ------- | -------------------------- | ------------------------------------- |
+| SKY     | Project Admin              | `admin@kavach.local`                  |
+| SKY     | Store Manager (one store)  | `store@kavach.local` or `9000000001`  |
+| SKY     | Store Manager (two stores) | `store2@kavach.local` or `9000000002` |
+| GRN     | Project Admin              | `admin2@kavach.local`                 |
+| GRN     | Store Manager              | `store.grn@kavach.local`              |
 
 Try the same task as an admin and as a Store Manager to see the difference in what each role can do.
 
@@ -324,30 +324,30 @@ pnpm --filter @kavach/mobile exec jest src/App.test.tsx
 
 ## 8. Other useful commands
 
-| Command | What it does |
-|---|---|
-| `pnpm project:create -- --code ABC --name "My Site" --admin-name "Name" --admin-email me@example.com --admin-password "Initial#123"` | Creates a new project and its first admin (who must change the password at first login) |
-| `pnpm user:reset-password -- --login me@example.com --password "New#Pass123"` | Resets the password of a user who works on several projects |
-| `pnpm user:add-member -- --login me@example.com --project ABC --role STORE_MANAGER --stores MAIN` | Adds an existing user to another project |
-| `pnpm ops:check` | Health check: stock balances against the ledger, stuck documents (run `pnpm build` first) |
-| `pnpm db:migrate` | Creates a new migration after you change `packages/db/prisma/schema.prisma` |
-| `pnpm --filter @kavach/db studio` | Opens Prisma Studio to browse the database |
-| `pnpm --filter @kavach/worker eval -- --provider fixture` | Runs the AI accuracy check offline on the sample documents |
-| `pnpm format` | Formats the code with Prettier |
+| Command                                                                                                                              | What it does                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `pnpm project:create -- --code ABC --name "My Site" --admin-name "Name" --admin-email me@example.com --admin-password "Initial#123"` | Creates a new project and its first admin (who must change the password at first login)   |
+| `pnpm user:reset-password -- --login me@example.com --password "New#Pass123"`                                                        | Resets the password of a user who works on several projects                               |
+| `pnpm user:add-member -- --login me@example.com --project ABC --role STORE_MANAGER --stores MAIN`                                    | Adds an existing user to another project                                                  |
+| `pnpm ops:check`                                                                                                                     | Health check: stock balances against the ledger, stuck documents (run `pnpm build` first) |
+| `pnpm db:migrate`                                                                                                                    | Creates a new migration after you change `packages/db/prisma/schema.prisma`               |
+| `pnpm --filter @kavach/db studio`                                                                                                    | Opens Prisma Studio to browse the database                                                |
+| `pnpm --filter @kavach/worker eval -- --provider fixture`                                                                            | Runs the AI accuracy check offline on the sample documents                                |
+| `pnpm format`                                                                                                                        | Formats the code with Prettier                                                            |
 
 ## 9. Troubleshooting
 
-| Problem | Fix |
-|---|---|
-| `pnpm install` says the Node version is not supported | You are not on Node 22. Run `nvm use 22` and try again. |
-| API stops with `JWT_SECRET must be set to at least 32 characters` | Set `JWT_SECRET` in `.env` (section 2.2). |
-| `Can't reach database server` | PostgreSQL is not running, or `DATABASE_URL` in `.env` has the wrong port or password. |
-| `The table ... does not exist` | Run `pnpm db:deploy`. |
-| Imports of `@kavach/shared` or `@kavach/db` fail | Run `pnpm build` once; those packages are used from their built output. |
-| Windows: `EPERM ... query_engine-windows.dll.node` during build or tests | An API or worker is still running and holds the Prisma file. Stop it (Ctrl + C) and run again. |
-| Uploaded invoice shows "AI reading is not set up" | Expected without an AI key. Set `AI_PROVIDER=fixture` to try the flow with the sample documents, or type the lines by hand. |
-| Login blocked: "Too many failed attempts" | Wait 15 minutes, or sign in from another computer. |
-| Port 3000 or 3001 already in use | Stop the other program, or change `API_PORT` in `.env` (and `NEXT_PUBLIC_API_URL` to match). |
+| Problem                                                                  | Fix                                                                                                                         |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install` says the Node version is not supported                    | You are not on Node 22. Run `nvm use 22` and try again.                                                                     |
+| API stops with `JWT_SECRET must be set to at least 32 characters`        | Set `JWT_SECRET` in `.env` (section 2.2).                                                                                   |
+| `Can't reach database server`                                            | PostgreSQL is not running, or `DATABASE_URL` in `.env` has the wrong port or password.                                      |
+| `The table ... does not exist`                                           | Run `pnpm db:deploy`.                                                                                                       |
+| Imports of `@kavach/shared` or `@kavach/db` fail                         | Run `pnpm build` once; those packages are used from their built output.                                                     |
+| Windows: `EPERM ... query_engine-windows.dll.node` during build or tests | An API or worker is still running and holds the Prisma file. Stop it (Ctrl + C) and run again.                              |
+| Uploaded invoice shows "AI reading is not set up"                        | Expected without an AI key. Set `AI_PROVIDER=fixture` to try the flow with the sample documents, or type the lines by hand. |
+| Login blocked: "Too many failed attempts"                                | Wait 15 minutes, or sign in from another computer.                                                                          |
+| Port 3000 or 3001 already in use                                         | Stop the other program, or change `API_PORT` in `.env` (and `NEXT_PUBLIC_API_URL` to match).                                |
 
 ## 10. Where to read more
 

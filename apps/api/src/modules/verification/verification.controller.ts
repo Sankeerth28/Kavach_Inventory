@@ -61,4 +61,3 @@ export class VerificationController {
     return this.verification.reject(ctx, id, body);
   }
 }
-

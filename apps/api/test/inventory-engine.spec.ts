@@ -1,11 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import type { PrismaClient } from '@kavach/db';
-import {
-  type ContractorDto,
-  type MaterialDto,
-  type StockDetailDto,
-  Decimal,
-} from '@kavach/shared';
+import { type ContractorDto, type MaterialDto, type StockDetailDto, Decimal } from '@kavach/shared';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -27,7 +22,10 @@ describe('Inventory Engine (Phase 2)', () => {
   let db: PrismaClient;
 
   const ik = (prefix = 'ik') =>
-    `${prefix}-${uniqueTag()}-${Math.random().toString(36).slice(2, 12)}`.replace(/[^A-Za-z0-9_-]/g, '_');
+    `${prefix}-${uniqueTag()}-${Math.random().toString(36).slice(2, 12)}`.replace(
+      /[^A-Za-z0-9_-]/g,
+      '_',
+    );
 
   const http = (
     actor: Actor,
@@ -37,7 +35,8 @@ describe('Inventory Engine (Phase 2)', () => {
     key?: string,
     projectId = fx.projectId,
   ) => {
-    let req = request(app.getHttpServer())[method](url)
+    const agent = request(app.getHttpServer());
+    let req = agent[method](url)
       .set('Authorization', `Bearer ${actor.token}`)
       .set('X-Project-Id', projectId);
     if (key) req = req.set('Idempotency-Key', key);
@@ -55,9 +54,7 @@ describe('Inventory Engine (Phase 2)', () => {
     db = rawDb(app);
 
     // Create a default location for issues and returns
-    const locRes = await admin()
-      .post('/locations', { name: 'Tower 1', type: 'TOWER' })
-      .expect(201);
+    const locRes = await admin().post('/locations', { name: 'Tower 1', type: 'TOWER' }).expect(201);
     defaultLocationId = locRes.body.id;
   });
 
@@ -200,7 +197,9 @@ describe('Inventory Engine (Phase 2)', () => {
       };
 
       const results = await Promise.all(
-        Array.from({ length: 10 }, () => http(fx.manager, 'post', '/inventory/issues', issueBody, ik())),
+        Array.from({ length: 10 }, () =>
+          http(fx.manager, 'post', '/inventory/issues', issueBody, ik()),
+        ),
       );
 
       const successes = results.filter((r) => r.status === 201);
@@ -701,7 +700,9 @@ describe('Inventory Engine (Phase 2)', () => {
       expect(new Decimal(bal.availableQty.toString()).equals(10)).toBe(true);
 
       // 2. SM cannot approve
-      await http(fx.manager, 'post', `/stock-verifications/${verId}/approve`, { note: 'ok' }).expect(403);
+      await http(fx.manager, 'post', `/stock-verifications/${verId}/approve`, {
+        note: 'ok',
+      }).expect(403);
 
       // SM cannot make direct adjustment
       await http(
@@ -952,7 +953,8 @@ describe('Inventory Engine (Phase 2)', () => {
       ).expect(201);
 
       // Total available across project: (25 - 5) + 35 = 55
-      const detail = (await http(fx.admin, 'get', `/stock/${mat.id}`).expect(200)).body as StockDetailDto;
+      const detail = (await http(fx.admin, 'get', `/stock/${mat.id}`).expect(200))
+        .body as StockDetailDto;
       expect(new Decimal(detail.projectAvailableQty).equals(55)).toBe(true);
       expect(detail.stores).toHaveLength(2);
     });
@@ -994,9 +996,7 @@ describe('Inventory Engine (Phase 2)', () => {
 
       // Attempt DELETE on postings
       await expect(
-        db.$executeRawUnsafe(
-          `DELETE FROM postings WHERE project_id = '${fx.projectId}'::uuid`,
-        ),
+        db.$executeRawUnsafe(`DELETE FROM postings WHERE project_id = '${fx.projectId}'::uuid`),
       ).rejects.toThrow(/is append-only/i);
     });
   });

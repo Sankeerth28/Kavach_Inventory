@@ -1,15 +1,24 @@
 'use client';
 
-import type {
-  PostingDto,
-  ReturnCondition,
-  ReturnInput,
-} from '@kavach/shared';
+import type { PostingDto, ReturnCondition, ReturnInput } from '@kavach/shared';
 import { convert } from '@kavach/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Table, Td, Textarea } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Select,
+  Table,
+  Td,
+  Textarea,
+} from '@/components/ui';
 import { api, errorMessage, useSession } from '@/lib/session';
 import { useStore } from '@/lib/store-context';
 import { cn } from '@/lib/utils';
@@ -29,9 +38,7 @@ export default function MaterialReturnPage() {
   const queryClient = useQueryClient();
 
   const defaultStoreId =
-    selectedStoreId !== 'ALL'
-      ? selectedStoreId
-      : authorizedStores[0]?.id ?? '';
+    selectedStoreId !== 'ALL' ? selectedStoreId : (authorizedStores[0]?.id ?? '');
 
   const [storeId, setStoreId] = useState(defaultStoreId);
   const [locationId, setLocationId] = useState('');
@@ -70,12 +77,14 @@ export default function MaterialReturnPage() {
   // Conversion context
   const conversionMap = useMemo(() => {
     const unitMap = new Map(units.map((u) => [u.id, { id: u.id, decimalPlaces: u.decimalPlaces }]));
-    const convRows = conversions.filter((c) => c.isActive).map((c) => ({
-      fromUnitId: c.fromUnitId,
-      toUnitId: c.toUnitId,
-      factor: c.factor,
-      materialId: c.materialId,
-    }));
+    const convRows = conversions
+      .filter((c) => c.isActive)
+      .map((c) => ({
+        fromUnitId: c.fromUnitId,
+        toUnitId: c.toUnitId,
+        factor: c.factor,
+        materialId: c.materialId,
+      }));
     return { units: unitMap, conversions: convRows };
   }, [units, conversions]);
 
@@ -174,7 +183,9 @@ export default function MaterialReturnPage() {
     setSubmitError(null);
     try {
       const idempotencyKey = `ik-ret-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      const combinedNotes = workOrder ? `WO: ${workOrder.trim()}. ${notes.trim()}`.trim() : notes.trim();
+      const combinedNotes = workOrder
+        ? `WO: ${workOrder.trim()}. ${notes.trim()}`.trim()
+        : notes.trim();
       const payload: ReturnInput = {
         storeId: activeStoreId,
         locationId,
@@ -208,7 +219,14 @@ export default function MaterialReturnPage() {
     setWorkOrder('');
     setNotes('');
     setLines([
-      { id: String(Date.now()), materialId: '', condition: 'GOOD', quantity: '', unitId: '', notes: '' },
+      {
+        id: String(Date.now()),
+        materialId: '',
+        condition: 'GOOD',
+        quantity: '',
+        unitId: '',
+        notes: '',
+      },
     ]);
   };
 
@@ -229,7 +247,9 @@ export default function MaterialReturnPage() {
           ✓
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Material Return Successfully Posted!</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Material Return Successfully Posted!
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Ledger posting completed. Reference:{' '}
             <span className="font-mono font-semibold text-foreground">
@@ -493,10 +513,7 @@ export default function MaterialReturnPage() {
                     </div>
 
                     <div>
-                      <Field
-                        label="Unit"
-                        hint={stockUnit ? `Stock: ${stockUnit.code}` : undefined}
-                      >
+                      <Field label="Unit" hint={stockUnit ? `Stock: ${stockUnit.code}` : undefined}>
                         {(id) => (
                           <Select
                             id={id}
@@ -579,11 +596,7 @@ export default function MaterialReturnPage() {
 
       {/* ── Pre-confirmation Modal ────────────────────────────────────────── */}
       {confirmModalOpen && (
-        <Modal
-          title="Confirm Material Return"
-          onClose={() => setConfirmModalOpen(false)}
-          wide
-        >
+        <Modal title="Confirm Material Return" onClose={() => setConfirmModalOpen(false)} wide>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Verify the returned materials and destination condition buckets below. Stock is
@@ -657,10 +670,7 @@ export default function MaterialReturnPage() {
 
       {/* ── Inline Contractor Modal ───────────────────────────────────────── */}
       {contractorModalOpen && (
-        <Modal
-          title="Add New Contractor Inline"
-          onClose={() => setContractorModalOpen(false)}
-        >
+        <Modal title="Add New Contractor Inline" onClose={() => setContractorModalOpen(false)}>
           <div className="space-y-4">
             {newContractorWarning && <Alert tone="warning">{newContractorWarning}</Alert>}
 

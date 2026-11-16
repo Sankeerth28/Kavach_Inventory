@@ -101,13 +101,19 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
     ).body as { id: string };
 
     const contractor = (
-      await admin.post('/contractors', { name: 'Alpha Infra', confirmNotDuplicate: true }).expect(201)
+      await admin
+        .post('/contractors', { name: 'Alpha Infra', confirmNotDuplicate: true })
+        .expect(201)
     ).body as { id: string };
     const contractorMergeSrc = (
-      await admin.post('/contractors', { name: 'Beta Structures', confirmNotDuplicate: true }).expect(201)
+      await admin
+        .post('/contractors', { name: 'Beta Structures', confirmNotDuplicate: true })
+        .expect(201)
     ).body as { id: string };
     const contractorMergeTarget = (
-      await admin.post('/contractors', { name: 'Gamma Developers', confirmNotDuplicate: true }).expect(201)
+      await admin
+        .post('/contractors', { name: 'Gamma Developers', confirmNotDuplicate: true })
+        .expect(201)
     ).body as { id: string };
 
     const matInventory = (
@@ -196,7 +202,10 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
         url: `/invoices/${draft.id}/duplicate-override`,
         body: { note: 'A genuinely different document' },
       },
-      'PATCH /settings/confidence': { url: '/settings/confidence', body: { auto: 0.95, confirm: 0.7 } },
+      'PATCH /settings/confidence': {
+        url: '/settings/confidence',
+        body: { auto: 0.95, confirm: 0.7 },
+      },
       'PATCH /projects/current': { url: '/projects/current', body: { name: 'Renamed by SM' } },
       'POST /stores': { url: '/stores', body: { code: 'SM-STORE', name: 'SM store' } },
       'PATCH /stores/:id': { url: `/stores/${fx.storeId}`, body: { name: 'Renamed' } },
@@ -363,9 +372,7 @@ describe('backend permissions (PRD §3, CLAUDE.md invariant 7)', () => {
       if (key.startsWith('POST /users/:userId/reset-password')) continue;
       const method = key.split(' ')[0]!.toLowerCase() as 'get' | 'post' | 'patch';
       const res =
-        method === 'get'
-          ? await admin.get(url, headers)
-          : await admin[method](url, body, headers);
+        method === 'get' ? await admin.get(url, headers) : await admin[method](url, body, headers);
       expect(res.status, `${key} → ${JSON.stringify(res.body)}`).toBeLessThan(300);
     }
   });

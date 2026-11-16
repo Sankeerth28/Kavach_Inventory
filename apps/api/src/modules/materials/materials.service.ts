@@ -369,11 +369,7 @@ export class MaterialsService {
           where: { projectId: ctx.projectId, materialId: id },
         });
         for (const b of balances) {
-          if (
-            Number(b.availableQty) > 0 ||
-            Number(b.damagedQty) > 0 ||
-            Number(b.scrapQty) > 0
-          ) {
+          if (Number(b.availableQty) > 0 || Number(b.damagedQty) > 0 || Number(b.scrapQty) > 0) {
             throw new DomainError(
               'MATERIAL_HAS_STOCK',
               'Cannot deactivate a material with stock on hand.',

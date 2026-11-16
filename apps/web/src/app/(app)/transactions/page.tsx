@@ -3,7 +3,21 @@
 import type { TransactionDto, TxnType } from '@kavach/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Alert, Badge, Button, Card, Field, Input, ListState, Modal, PageHeader, Select, Table, Td, Textarea } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  ListState,
+  Modal,
+  PageHeader,
+  Select,
+  Table,
+  Td,
+  Textarea,
+} from '@/components/ui';
 import { api, errorMessage, useSession } from '@/lib/session';
 import { useStore } from '@/lib/store-context';
 import { cn } from '@/lib/utils';
@@ -203,9 +217,7 @@ export default function TransactionsPage() {
                   {txn.contractorName ?? txn.locationPath ?? txn.supplierName ?? '—'}
                 </Td>
                 <Td>
-                  <Badge tone={isReversed ? 'neutral' : 'success'}>
-                    {txn.status}
-                  </Badge>
+                  <Badge tone={isReversed ? 'neutral' : 'success'}>{txn.status}</Badge>
                   {txn.reversesTxnNo && (
                     <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
                       of {txn.reversesTxnNo}

@@ -86,7 +86,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
                         className={cn(
                           'block rounded-md px-2 py-2 text-sm hover:bg-muted',
-                          pathname.startsWith(item.href) && 'bg-primary/10 font-medium text-primary',
+                          pathname.startsWith(item.href) &&
+                            'bg-primary/10 font-medium text-primary',
                         )}
                       >
                         {item.label}
@@ -135,49 +136,52 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <span className="text-border">|</span>
             <StoreSwitcher />
             <div className="ml-auto flex items-center gap-2">
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="Notifications"
-                aria-expanded={bellOpen}
-                onClick={() => setBellOpen((v) => !v)}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Notifications"
+                  aria-expanded={bellOpen}
+                  onClick={() => setBellOpen((v) => !v)}
+                >
+                  🔔
+                </Button>
+                {bellOpen && (
+                  <div className="absolute right-0 mt-2 w-64 rounded-md border border-border bg-surface p-4 text-sm shadow-lg">
+                    <p className="font-medium">Notifications</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Nothing yet. Low stock and pending approvals will appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="hidden text-right sm:block">
+                <p className="text-sm leading-tight font-medium">{me.user.name}</p>
+                <p className="text-xs leading-tight text-muted-foreground">{membership.roleName}</p>
+              </div>
+              <Link
+                href="/change-password"
+                className="text-xs text-muted-foreground hover:underline"
               >
-                🔔
+                Password
+              </Link>
+              <Button variant="secondary" size="sm" onClick={() => void session.logout()}>
+                Sign out
               </Button>
-              {bellOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-md border border-border bg-surface p-4 text-sm shadow-lg">
-                  <p className="font-medium">Notifications</p>
-                  <p className="mt-1 text-muted-foreground">
-                    Nothing yet. Low stock and pending approvals will appear here.
-                  </p>
-                </div>
-              )}
             </div>
-            <div className="hidden text-right sm:block">
-              <p className="text-sm leading-tight font-medium">{me.user.name}</p>
-              <p className="text-xs leading-tight text-muted-foreground">{membership.roleName}</p>
-            </div>
-            <Link href="/change-password" className="text-xs text-muted-foreground hover:underline">
-              Password
-            </Link>
-            <Button variant="secondary" size="sm" onClick={() => void session.logout()}>
-              Sign out
-            </Button>
-          </div>
-        </header>
-        <main className="min-w-0 flex-1 p-4 sm:p-6">
-          {allowed ? (
-            children
-          ) : (
-            <Alert tone="warning" title="Not available">
-              Your role ({membership.roleName}) does not include this page.{' '}
-              <Badge>{pathname}</Badge>
-            </Alert>
-          )}
-        </main>
+          </header>
+          <main className="min-w-0 flex-1 p-4 sm:p-6">
+            {allowed ? (
+              children
+            ) : (
+              <Alert tone="warning" title="Not available">
+                Your role ({membership.roleName}) does not include this page.{' '}
+                <Badge>{pathname}</Badge>
+              </Alert>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
     </StoreProvider>
   );
 }

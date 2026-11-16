@@ -1,15 +1,24 @@
 'use client';
 
-import type {
-  IssueInput,
-  PostingDto,
-  StockRowDto,
-} from '@kavach/shared';
+import type { IssueInput, PostingDto, StockRowDto } from '@kavach/shared';
 import { convert } from '@kavach/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Table, Td, Textarea } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Select,
+  Table,
+  Td,
+  Textarea,
+} from '@/components/ui';
 import { api, errorMessage, useSession } from '@/lib/session';
 import { useStore } from '@/lib/store-context';
 import { cn } from '@/lib/utils';
@@ -28,9 +37,7 @@ export default function MaterialOutPage() {
   const queryClient = useQueryClient();
 
   const defaultStoreId =
-    selectedStoreId !== 'ALL'
-      ? selectedStoreId
-      : authorizedStores[0]?.id ?? '';
+    selectedStoreId !== 'ALL' ? selectedStoreId : (authorizedStores[0]?.id ?? '');
 
   const [storeId, setStoreId] = useState(defaultStoreId);
   const [locationId, setLocationId] = useState('');
@@ -83,12 +90,14 @@ export default function MaterialOutPage() {
   // Conversion context
   const conversionMap = useMemo(() => {
     const unitMap = new Map(units.map((u) => [u.id, { id: u.id, decimalPlaces: u.decimalPlaces }]));
-    const convRows = conversions.filter((c) => c.isActive).map((c) => ({
-      fromUnitId: c.fromUnitId,
-      toUnitId: c.toUnitId,
-      factor: c.factor,
-      materialId: c.materialId,
-    }));
+    const convRows = conversions
+      .filter((c) => c.isActive)
+      .map((c) => ({
+        fromUnitId: c.fromUnitId,
+        toUnitId: c.toUnitId,
+        factor: c.factor,
+        materialId: c.materialId,
+      }));
     return { units: unitMap, conversions: convRows };
   }, [units, conversions]);
 
@@ -187,7 +196,9 @@ export default function MaterialOutPage() {
     setSubmitError(null);
     try {
       const idempotencyKey = `ik-iss-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      const combinedNotes = workOrder ? `WO: ${workOrder.trim()}. ${notes.trim()}`.trim() : notes.trim();
+      const combinedNotes = workOrder
+        ? `WO: ${workOrder.trim()}. ${notes.trim()}`.trim()
+        : notes.trim();
       const payload: IssueInput = {
         storeId: activeStoreId,
         locationId,
@@ -552,8 +563,8 @@ export default function MaterialOutPage() {
 
                   {isOverStock && (
                     <p className="text-xs font-semibold text-danger">
-                      ⚠️ Insufficient Stock: entered {convertedQtyInStockUnit} {stockUnit?.code}, but
-                      only {availableQty} {stockUnit?.code} available in store.
+                      ⚠️ Insufficient Stock: entered {convertedQtyInStockUnit} {stockUnit?.code},
+                      but only {availableQty} {stockUnit?.code} available in store.
                     </p>
                   )}
                 </div>
@@ -596,11 +607,7 @@ export default function MaterialOutPage() {
 
       {/* ── Pre-confirmation Modal ────────────────────────────────────────── */}
       {confirmModalOpen && (
-        <Modal
-          title="Confirm Material Issue"
-          onClose={() => setConfirmModalOpen(false)}
-          wide
-        >
+        <Modal title="Confirm Material Issue" onClose={() => setConfirmModalOpen(false)} wide>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Please verify the items and quantities below. This will deduct stock from the{' '}
@@ -668,10 +675,7 @@ export default function MaterialOutPage() {
 
       {/* ── Inline Contractor Add Modal (Q31) ─────────────────────────────── */}
       {contractorModalOpen && (
-        <Modal
-          title="Add New Contractor Inline"
-          onClose={() => setContractorModalOpen(false)}
-        >
+        <Modal title="Add New Contractor Inline" onClose={() => setContractorModalOpen(false)}>
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
               Add a new contractor inline. Admins can later merge or update contractor details.

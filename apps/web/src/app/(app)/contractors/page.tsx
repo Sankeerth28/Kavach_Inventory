@@ -3,7 +3,19 @@
 import type { ContractorDto } from '@kavach/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Alert, Badge, Button, Field, Input, ListState, Modal, PageHeader, Select, Table, Td } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Field,
+  Input,
+  ListState,
+  Modal,
+  PageHeader,
+  Select,
+  Table,
+  Td,
+} from '@/components/ui';
 import { api, errorMessage, useSession } from '@/lib/session';
 
 export default function ContractorsPage() {
@@ -59,7 +71,10 @@ export default function ContractorsPage() {
     } catch (err) {
       setCreateError(errorMessage(err));
       // If duplicate conflict, prompt confirmation
-      if (errorMessage(err).toLowerCase().includes('duplicate') || errorMessage(err).toLowerCase().includes('similar')) {
+      if (
+        errorMessage(err).toLowerCase().includes('duplicate') ||
+        errorMessage(err).toLowerCase().includes('similar')
+      ) {
         setConfirmNotDuplicate(true);
       }
     } finally {
@@ -128,28 +143,25 @@ export default function ContractorsPage() {
       />
 
       {contractors.length > 0 && (
-        <Table head={['Contractor Name', 'Phone', 'Status', canManage ? 'Actions' : ''].filter(Boolean)}>
+        <Table
+          head={['Contractor Name', 'Phone', 'Status', canManage ? 'Actions' : ''].filter(Boolean)}
+        >
           {contractors.map((c) => (
             <tr key={c.id} className="hover:bg-muted/40">
               <Td className="font-medium text-foreground">
                 {c.name}
                 {c.mergedIntoId && (
                   <span className="ml-2 text-xs text-muted-foreground font-normal">
-                    (Merged into {contractors.find((tc) => tc.id === c.mergedIntoId)?.name ?? 'another contractor'})
+                    (Merged into{' '}
+                    {contractors.find((tc) => tc.id === c.mergedIntoId)?.name ??
+                      'another contractor'}
+                    )
                   </span>
                 )}
               </Td>
               <Td className="text-muted-foreground font-mono text-xs">{c.phone ?? '—'}</Td>
               <Td>
-                <Badge
-                  tone={
-                    c.mergedIntoId
-                      ? 'neutral'
-                      : c.isActive
-                        ? 'success'
-                        : 'neutral'
-                  }
-                >
+                <Badge tone={c.mergedIntoId ? 'neutral' : c.isActive ? 'success' : 'neutral'}>
                   {c.mergedIntoId ? 'Merged' : c.isActive ? 'Active' : 'Inactive'}
                 </Badge>
               </Td>
@@ -250,7 +262,10 @@ export default function ContractorsPage() {
 
       {/* ── Edit Modal ────────────────────────────────────────────────────── */}
       {editModalOpen && editingContractor && (
-        <Modal title={`Edit Contractor — ${editingContractor.name}`} onClose={() => setEditModalOpen(false)}>
+        <Modal
+          title={`Edit Contractor — ${editingContractor.name}`}
+          onClose={() => setEditModalOpen(false)}
+        >
           <div className="space-y-4">
             <Field label="Contractor Name">
               {(id) => (
@@ -265,11 +280,7 @@ export default function ContractorsPage() {
 
             <Field label="Phone">
               {(id) => (
-                <Input
-                  id={id}
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                />
+                <Input id={id} value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
               )}
             </Field>
 
@@ -287,11 +298,7 @@ export default function ContractorsPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-3 border-t">
-              <Button
-                variant="secondary"
-                onClick={() => setEditModalOpen(false)}
-                disabled={saving}
-              >
+              <Button variant="secondary" onClick={() => setEditModalOpen(false)} disabled={saving}>
                 Cancel
               </Button>
               <Button onClick={handleUpdate} disabled={saving || !editName.trim()}>
@@ -359,4 +366,3 @@ export default function ContractorsPage() {
     </div>
   );
 }
-

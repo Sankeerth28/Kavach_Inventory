@@ -1,5 +1,5 @@
-import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { NavProvider, type Route } from './lib/nav';
 import { SessionProvider, useSession } from './lib/session';
 import { ChangePasswordScreen, LoginScreen } from './screens/auth';

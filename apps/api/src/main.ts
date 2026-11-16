@@ -31,7 +31,8 @@ async function bootstrap(): Promise<void> {
     ],
   });
 
-  const port = Number(process.env.API_PORT ?? 3001);
+  // Managed hosts (Render, Railway, ...) assign the port through PORT.
+  const port = Number(process.env.API_PORT ?? process.env.PORT ?? 3001);
   await app.listen(port);
   console.log(`api listening on http://localhost:${port}`);
 }

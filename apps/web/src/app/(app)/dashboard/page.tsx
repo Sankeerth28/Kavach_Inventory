@@ -132,8 +132,8 @@ export default function DashboardPage() {
         <Alert tone="info" title="Scanned documents waiting for you">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span>
-              <strong>{ai.pendingReview}</strong> document{ai.pendingReview === 1 ? ' is' : 's are'} read
-              and ready to be checked and received.
+              <strong>{ai.pendingReview}</strong> document{ai.pendingReview === 1 ? ' is' : 's are'}{' '}
+              read and ready to be checked and received.
             </span>
             <Link href="/material-in">
               <Button size="sm" variant="secondary">
@@ -177,7 +177,8 @@ export default function DashboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span>
               There {pendingCount === 1 ? 'is' : 'are'} <strong>{pendingCount}</strong> physical
-              stock count {pendingCount === 1 ? 'submission' : 'submissions'} awaiting your approval.
+              stock count {pendingCount === 1 ? 'submission' : 'submissions'} awaiting your
+              approval.
             </span>
             <Link href="/stock-verification">
               <Button size="sm" variant="secondary">
@@ -269,7 +270,9 @@ export default function DashboardPage() {
       {/* KPI Stats Grid */}
       <section aria-label="Stock Metrics">
         <h2 className="mb-3 text-sm font-semibold tracking-tight text-muted-foreground uppercase">
-          {isAllStores ? 'Project-Wide Stock Overview' : `Stock Overview • ${selectedStore?.name ?? 'Store'}`}
+          {isAllStores
+            ? 'Project-Wide Stock Overview'
+            : `Stock Overview • ${selectedStore?.name ?? 'Store'}`}
         </h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard

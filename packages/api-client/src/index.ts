@@ -165,6 +165,7 @@ export function createApiClient(options: ApiClientOptions) {
             ? undefined
             : JSON.stringify(opts.body),
         credentials: options.mode === 'web' ? 'include' : 'omit',
+        signal: AbortSignal.timeout(opts.file ? 60_000 : 15_000),
       });
     } catch {
       throw new ApiError(0, 'NETWORK', 'Cannot reach the server. Check your connection.');

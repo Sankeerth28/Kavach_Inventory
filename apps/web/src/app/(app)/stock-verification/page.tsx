@@ -1,13 +1,23 @@
 'use client';
 
-import type {
-  SubmitVerificationInput,
-  VerificationDto,
-  VerificationStatus,
-} from '@kavach/shared';
+import type { SubmitVerificationInput, VerificationDto, VerificationStatus } from '@kavach/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Alert, Badge, Button, Card, Field, Input, ListState, Modal, PageHeader, Select, Table, Td, Textarea } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  ListState,
+  Modal,
+  PageHeader,
+  Select,
+  Table,
+  Td,
+  Textarea,
+} from '@/components/ui';
 import { api, errorMessage, useSession } from '@/lib/session';
 import { useStore } from '@/lib/store-context';
 import { cn } from '@/lib/utils';
@@ -22,7 +32,7 @@ export default function StockVerificationPage() {
   // Submit physical count modal state
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [newStoreId, setNewStoreId] = useState(
-    selectedStoreId !== 'ALL' ? selectedStoreId : authorizedStores[0]?.id ?? '',
+    selectedStoreId !== 'ALL' ? selectedStoreId : (authorizedStores[0]?.id ?? ''),
   );
   const [newMaterialId, setNewMaterialId] = useState('');
   const [newPhysicalCount, setNewPhysicalCount] = useState('');
@@ -276,9 +286,7 @@ export default function StockVerificationPage() {
                     </div>
                   ) : (
                     <span className="text-xs text-muted-foreground">
-                      {v.reviewedAt
-                        ? `Reviewed by ${v.reviewedByName ?? 'Admin'}`
-                        : '—'}
+                      {v.reviewedAt ? `Reviewed by ${v.reviewedByName ?? 'Admin'}` : '—'}
                     </span>
                   )}
                 </Td>
@@ -290,14 +298,11 @@ export default function StockVerificationPage() {
 
       {/* ── Submit Physical Count Modal ───────────────────────────────────── */}
       {submitModalOpen && (
-        <Modal
-          title="Submit Physical Stock Count"
-          onClose={() => setSubmitModalOpen(false)}
-        >
+        <Modal title="Submit Physical Stock Count" onClose={() => setSubmitModalOpen(false)}>
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Enter your physical on-site count. System balance will be compared automatically.
-              Upon admin review, an approved count will post a stock correction adjustment.
+              Enter your physical on-site count. System balance will be compared automatically. Upon
+              admin review, an approved count will post a stock correction adjustment.
             </p>
 
             {submitError && <Alert>{submitError}</Alert>}
@@ -358,8 +363,7 @@ export default function StockVerificationPage() {
                             : 'text-danger',
                       )}
                     >
-                      {Number(variance) > 0 ? `+${variance}` : variance}{' '}
-                      {selectedMat.stockUnitCode}
+                      {Number(variance) > 0 ? `+${variance}` : variance} {selectedMat.stockUnitCode}
                     </p>
                   </div>
                 )}
