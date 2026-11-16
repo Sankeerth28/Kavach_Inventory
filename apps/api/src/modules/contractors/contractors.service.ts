@@ -83,7 +83,12 @@ export class ContractorsService {
       const details: SimilarContractorsDetails = {
         similar: similar.map((c) => this.toDto(c)),
       };
-      throw new DomainError('POSSIBLE_DUPLICATE', 'A similar contractor already exists.', 409, details);
+      throw new DomainError(
+        'POSSIBLE_DUPLICATE',
+        'A similar contractor already exists.',
+        409,
+        details,
+      );
     }
 
     return this.prisma.db.$transaction(async (tx) => {
@@ -108,7 +113,11 @@ export class ContractorsService {
     });
   }
 
-  async update(ctx: RequestContext, id: string, input: UpdateContractorInput): Promise<ContractorDto> {
+  async update(
+    ctx: RequestContext,
+    id: string,
+    input: UpdateContractorInput,
+  ): Promise<ContractorDto> {
     const c = await this.prisma.db.contractor.findFirst({
       where: { id, projectId: ctx.projectId },
     });
@@ -141,7 +150,11 @@ export class ContractorsService {
     });
   }
 
-  async merge(ctx: RequestContext, id: string, input: MergeContractorInput): Promise<ContractorDto> {
+  async merge(
+    ctx: RequestContext,
+    id: string,
+    input: MergeContractorInput,
+  ): Promise<ContractorDto> {
     if (id === input.intoId) {
       throw invalid('Cannot merge a contractor into itself.');
     }
@@ -180,4 +193,3 @@ export class ContractorsService {
     });
   }
 }
-

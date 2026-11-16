@@ -5,7 +5,7 @@ export interface AppConfig {
   refreshTokenTtlDays: number;
   webOrigins: string[];
   cookieSecure: boolean;
-  /** Path of the refresh cookie as the browser sees it. `/backend/auth` when the web app proxies the API. */
+  /** Path of the refresh cookie as the browser sees it (prefixed when the web app proxies the API). */
   cookiePath: string;
 }
 

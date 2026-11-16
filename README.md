@@ -28,7 +28,7 @@ If any one of them is not running, you will see a blank page, an error, or a log
    ```powershell
    node -v
    ```
-   It must print `v22.something`. If it prints anything else (like `v25.0.0`), run `nvm use 22.23.5` in a terminal opened **as Administrator** (right-click PowerShell, *Run as administrator*), then close it and open a normal terminal again.
+   It must print `v22.something`. If it prints anything else (like `v25.0.0`), run `nvm use 22.23.5` in a terminal opened **as Administrator** (right-click PowerShell, _Run as administrator_), then close it and open a normal terminal again.
 
 ### Step 2. Start the database
 
@@ -40,7 +40,7 @@ Use **one** of these, depending on how your database was set up.
 & "C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe" -D .local\pg -l .local\pg\pg.log -o "-p 5433" start
 ```
 
-It prints `server started`. If it says *another server might be running*, that is fine: it was already on.
+It prints `server started`. If it says _another server might be running_, that is fine: it was already on.
 
 **B. Docker** (Docker Desktop must be open first):
 
@@ -100,16 +100,16 @@ Only three things:
 
 ### It doesn't work?
 
-| What you see | What it means and what to do |
-|---|---|
-| Browser says *This site can't be reached* on `localhost:3000` | The app is not running. Run `pnpm dev` and wait for `Ready`. Keep that window open. |
-| Sign-in page opens, but signing in fails or spins forever | The API is not running or crashed. Open http://localhost:3001/health. If it doesn't show `ok`, scroll up in the `pnpm dev` window and look for a red error. |
-| `Can't reach database server` in the terminal | The database is not running. Do step 2 again. |
-| `Unsupported engine` or *wanted node >=22.12 <23* | Wrong Node.js version. See step 1. |
-| `pnpm` is not recognized | Install it once: `npm install -g pnpm@12`, then open a new terminal. |
-| `JWT_SECRET must be set` | Your `.env` file is missing or incomplete. See [section 2.2](#22-create-your-env-file). |
-| `The table ... does not exist` | Run `pnpm db:deploy`. |
-| *Port 3000 (or 3001) is already in use* | The app is already running in another terminal window. Use that one, or close it first. |
+| What you see                                                  | What it means and what to do                                                                                                                                |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser says _This site can't be reached_ on `localhost:3000` | The app is not running. Run `pnpm dev` and wait for `Ready`. Keep that window open.                                                                         |
+| Sign-in page opens, but signing in fails or spins forever     | The API is not running or crashed. Open http://localhost:3001/health. If it doesn't show `ok`, scroll up in the `pnpm dev` window and look for a red error. |
+| `Can't reach database server` in the terminal                 | The database is not running. Do step 2 again.                                                                                                               |
+| `Unsupported engine` or _wanted node >=22.12 <23_             | Wrong Node.js version. See step 1.                                                                                                                          |
+| `pnpm` is not recognized                                      | Install it once: `npm install -g pnpm@12`, then open a new terminal.                                                                                        |
+| `JWT_SECRET must be set`                                      | Your `.env` file is missing or incomplete. See [section 2.2](#22-create-your-env-file).                                                                     |
+| `The table ... does not exist`                                | Run `pnpm db:deploy`.                                                                                                                                       |
+| _Port 3000 (or 3001) is already in use_                       | The app is already running in another terminal window. Use that one, or close it first.                                                                     |
 
 More problems and fixes are in [section 9](#9-troubleshooting). The rest of this README is the full reference.
 
@@ -142,39 +142,44 @@ winget install --id Cloudflare.cloudflared
 
 Demo logins: `admin@kavach.local` (Project Admin) and `store@kavach.local` (Store Manager), password `Kavach@123`. Anyone with the link can see the demo data, so do not load real data while sharing.
 
-How it works: `pnpm share` serves the API through the web app at `/backend` (`API_PROXY_TARGET`, `NEXT_PUBLIC_API_URL=/backend`, `COOKIE_PATH=/backend/auth`), so web and API share one address and the sign-in cookie keeps working. For a link that works with your computer off, see the next section.
+How it works: `pnpm share` serves the API through the web app at `/kapi` (`API_PROXY_TARGET`, `NEXT_PUBLIC_API_URL=/kapi`, `COOKIE_PATH=/kapi/auth`), so web and API share one address and the sign-in cookie keeps working. For a link that works with your computer off, see the next section.
 
 ---
 
-## Deploy online for free (Neon + Render + Vercel)
+## Deploy online for free (Supabase + Render + Vercel)
 
-A permanent prototype link for the team, on free plans. Three free accounts, all "Sign up with GitHub":
+A permanent prototype link for the team, on free plans. Three free accounts, all "Sign up with GitHub". They deploy the `main` branch.
 
 ```
- Teammates ──► Vercel (web app) ──/backend──► Render (API + AI worker) ──► Neon (database)
- Android app (APK) ─────────────────────────► Render
+ Teammates ──► Vercel (web app) ──/kapi──► Render (API + AI worker) ──► Supabase (database + files)
+ Android app (APK) ──────────────────────► Render
 ```
 
-| Part | Service | Config in this repo |
-|---|---|---|
-| Database | [Neon](https://neon.tech) | none |
-| API + worker | [Render](https://render.com) | `render.yaml`, `scripts/start-server.mjs` |
-| Web app | [Vercel](https://vercel.com) | `apps/web/vercel.json` |
-| Android app | [Expo EAS](https://expo.dev) | `apps/mobile/eas.json` |
+| Part                      | Service                          | Config in this repo                               |
+| ------------------------- | -------------------------------- | ------------------------------------------------- |
+| Database + uploaded files | [Supabase](https://supabase.com) | none                                              |
+| API + worker              | [Render](https://render.com)     | `render.yaml`                                     |
+| Web app                   | [Vercel](https://vercel.com)     | `apps/web/vercel.json`, `apps/web/next.config.ts` |
+| Android app               | [Expo EAS](https://expo.dev)     | `apps/mobile/eas.json`                            |
 
 **Free-plan limits, tell your team:**
-- The API sleeps after 15 minutes without visitors. The first visit after that takes about a minute; if the page shows an error, wait and refresh.
-- Uploaded invoice files are lost when Render restarts or redeploys (the data in the database stays).
-- AI invoice reading is off until you add an `OPENAI_API_KEY` on Render (paid; see DECISIONS Q29). Without it, lines are typed in by hand.
-- Web uploads pass through Vercel and may be refused above about 4.5 MB per file. The Android app uploads straight to Render.
-- Vercel's free plan is meant for non-commercial use; for a company prototype that's usually fine short-term, but check before going live.
 
-### Step 1. Database (Neon)
-1. Sign up at neon.tech → **Create project**: name `kavach`, Postgres 16 or later, region **AWS Asia Pacific (Singapore)**.
-2. On the dashboard click **Connect**, turn **Connection pooling off**, and copy the connection string. It looks like `postgresql://neondb_owner:…@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`.
-3. On your computer, in PowerShell in the project folder, create the tables and the demo data in Neon:
+- The API sleeps after 15 minutes without visitors. The first visit after that takes about a minute; if the page shows an error, wait and refresh.
+- A free Supabase project is paused after a week without any use; open the Supabase dashboard and click **Restore** if that happens.
+- AI invoice reading is off until you add `OPENAI_API_KEY` on Render (paid; see DECISIONS Q29). Without it, lines are typed in by hand.
+- Web uploads pass through Vercel and may be refused above about 4.5 MB per file. The Android app uploads straight to Render.
+- Vercel's free plan is meant for non-commercial use; fine for a short internal prototype, check before going live.
+
+### Step 1. Supabase (database and file storage)
+
+1. Sign up at supabase.com → **New project**: name `kavach`, set a database password (save it), region **Mumbai (ap-south-1)** or **Singapore**.
+2. **Database address:** click **Connect** (top of the dashboard) → **Session pooler** → copy the URI and put your password in place of `[YOUR-PASSWORD]`. It looks like
+   `postgresql://postgres.abcd1234:PASSWORD@aws-0-ap-south-1.pooler.supabase.com:5432/postgres`
+3. **File storage:** left menu **Storage** → **New bucket** → name `kavach-documents`, keep it **private**.
+4. **Storage keys:** Storage → **Settings** (S3 connection) → turn on S3 access, copy the **Endpoint** and **Region**, then **New access key** → copy the **Access key ID** and **Secret access key** (shown once).
+5. On your computer, in PowerShell in the project folder, create the tables and the demo data in Supabase:
    ```powershell
-   $env:DATABASE_URL = "PASTE-THE-NEON-STRING-HERE"
+   $env:DATABASE_URL = "PASTE-THE-SESSION-POOLER-URI-HERE"
    pnpm db:deploy
    pnpm db:seed
    Remove-Item Env:DATABASE_URL
@@ -182,27 +187,32 @@ A permanent prototype link for the team, on free plans. Three free accounts, all
    The last line switches this terminal back to your local database.
 
 ### Step 2. API (Render)
+
 1. Sign up at render.com → **New** → **Blueprint** → connect GitHub → pick this repository. Render reads `render.yaml`.
-2. It asks for two values:
-   - `DATABASE_URL`: the Neon string from step 1.
-   - `WEB_ORIGIN`: `https://kavach-inventory.vercel.app` (the Vercel name you will pick in step 3; change it later if Vercel gives a different address).
+2. Fill in the values it asks for:
+   | Name                                                                   | Value                                                                           |
+   | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+   | `DATABASE_URL`                                                         | the Session pooler URI from step 1.2                                            |
+   | `WEB_ORIGIN`                                                           | `https://kavach-inventory.vercel.app` (the Vercel name you will pick in step 3) |
+   | `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | from step 1.4                                                                   |
 3. Click **Apply**. The first build takes 5–10 minutes.
 4. Open the service, copy its address (for example `https://kavach-api.onrender.com`), and open `<that address>/health` in the browser. You should see `{"status":"ok","service":"api"}`.
 
 ### Step 3. Web app (Vercel)
+
 1. Sign up at vercel.com → **Add New… → Project** → import this repository.
-2. **Project Name**: `kavach-inventory`. **Root Directory**: click *Edit* and choose `apps/web`.
-3. **Environment Variables**, add three:
-   | Name | Value |
-   |---|---|
-   | `NEXT_PUBLIC_API_URL` | `/backend` |
-   | `API_PROXY_TARGET` | the Render address from step 2, e.g. `https://kavach-api.onrender.com` |
-   | `ENABLE_EXPERIMENTAL_COREPACK` | `1` |
-4. Click **Deploy**. When it finishes, open the address it shows. If it is not `https://kavach-inventory.vercel.app`, put the real one in `WEB_ORIGIN` on Render (*Environment* tab → Save, Render restarts).
-5. Sign in with `admin@kavach.local` / `Kavach@123` and send the link to your team. Because this link is public, change the demo passwords (or create real users with `pnpm project:create` against Neon) before sharing widely.
+2. **Project Name**: `kavach-inventory`. **Root Directory**: click _Edit_ and choose `apps/web`.
+3. **Environment Variables**, add two:
+   | Name                  | Value                                                                  |
+   | --------------------- | ---------------------------------------------------------------------- |
+   | `NEXT_PUBLIC_API_URL` | `/kapi`                                                                |
+   | `API_PROXY_TARGET`    | the Render address from step 2, e.g. `https://kavach-api.onrender.com` |
+4. Click **Deploy**. When it finishes, open the address it shows. If it is not `https://kavach-inventory.vercel.app`, put the real one in `WEB_ORIGIN` on Render (_Environment_ tab → Save; Render restarts).
+5. Sign in with `admin@kavach.local` / `Kavach@123`, then send the link to your team. The link is public, so change the demo passwords (or create real users with `pnpm project:create` against Supabase) before sharing widely.
 
 ### Step 4. Android app (optional)
-1. If your Render address is not `https://kavach-api.onrender.com`, put it in `apps/mobile/eas.json` (`EXPO_PUBLIC_API_URL`).
+
+1. In `apps/mobile/eas.json`, set `EXPO_PUBLIC_API_URL` to your Render address from step 2 (for example `https://kavach-api.onrender.com`), and push that change.
 2. Sign up at expo.dev, then in PowerShell:
    ```powershell
    npm install -g eas-cli
@@ -215,7 +225,8 @@ A permanent prototype link for the team, on free plans. Three free accounts, all
 3. iPhone users open the Vercel link in Safari (installing iPhone apps outside the App Store needs a paid Apple developer account).
 
 ### Updating the online version
-Push to the deployed branch on GitHub. Vercel and Render rebuild automatically, and Render applies new database migrations when it starts. Rebuild the Android app (`eas build …`) only when the mobile code changed.
+
+Push to `main` on GitHub. Vercel and Render rebuild automatically, and Render applies new database migrations when it starts. Rebuild the Android app (`eas build …`) only when the mobile code changed.
 
 ---
 
@@ -236,13 +247,13 @@ Push to the deployed branch on GitHub. Vercel and Render rebuild automatically, 
 
 ## 1. What you need
 
-| Tool | Version | Notes |
-|---|---|---|
-| Node.js | **22 LTS only** | The repo refuses any other major version. With nvm: `nvm install 22` then `nvm use 22`. |
-| pnpm | 12 | `npm install -g pnpm@12` |
-| PostgreSQL | 15 or later | Either Docker (easiest) or a PostgreSQL you install yourself. |
-| Docker Desktop | optional | Starts PostgreSQL, Redis and MinIO in one command. |
-| Expo Go app | optional | On your phone, only if you want to try the mobile app. |
+| Tool           | Version         | Notes                                                                                   |
+| -------------- | --------------- | --------------------------------------------------------------------------------------- |
+| Node.js        | **22 LTS only** | The repo refuses any other major version. With nvm: `nvm install 22` then `nvm use 22`. |
+| pnpm           | 12              | `npm install -g pnpm@12`                                                                |
+| PostgreSQL     | 15 or later     | Either Docker (easiest) or a PostgreSQL you install yourself.                           |
+| Docker Desktop | optional        | Starts PostgreSQL, Redis and MinIO in one command.                                      |
+| Expo Go app    | optional        | On your phone, only if you want to try the mobile app.                                  |
 
 Redis, MinIO (S3 storage) and an OpenAI key are **not** needed to run the project locally. See [section 2.4](#24-ai-reading-of-invoices-optional).
 
@@ -314,10 +325,10 @@ DATABASE_URL=postgresql://kavach:kavach@localhost:5432/kavach?schema=public
 
 You can leave this alone. Without any AI settings, uploaded invoices fail with a clear message and you type the lines by hand. Everything else works.
 
-| You want | Set in `.env` |
-|---|---|
+| You want                                                                               | Set in `.env`         |
+| -------------------------------------------------------------------------------------- | --------------------- |
 | Try the scanning flow **offline, for free**, with the sample documents in `test-docs/` | `AI_PROVIDER=fixture` |
-| Read real documents with OpenAI (costs money) | `OPENAI_API_KEY=...` |
+| Read real documents with OpenAI (costs money)                                          | `OPENAI_API_KEY=...`  |
 
 > **Do not send real supplier invoices to OpenAI** until sending them has been approved for privacy.
 
@@ -340,12 +351,12 @@ pnpm dev
 
 This starts everything together:
 
-| App | Address | What it is |
-|---|---|---|
-| Web app | http://localhost:3000 | Open this in your browser |
-| API | http://localhost:3001 | Used by the web and mobile apps. Check it at http://localhost:3001/health |
-| Worker | (no address) | Reads uploaded invoices in the background |
-| Mobile (Expo) | shows a QR code in the terminal | See [section 6](#6-run-the-mobile-app-on-a-phone) |
+| App           | Address                         | What it is                                                                |
+| ------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| Web app       | http://localhost:3000           | Open this in your browser                                                 |
+| API           | http://localhost:3001           | Used by the web and mobile apps. Check it at http://localhost:3001/health |
+| Worker        | (no address)                    | Reads uploaded invoices in the background                                 |
+| Mobile (Expo) | shows a QR code in the terminal | See [section 6](#6-run-the-mobile-app-on-a-phone)                         |
 
 Stop everything with **Ctrl + C**.
 
@@ -353,13 +364,13 @@ Stop everything with **Ctrl + C**.
 
 Open http://localhost:3000. The password for every demo account is **`Kavach@123`**.
 
-| Project | Role | Login (e-mail or mobile) |
-|---|---|---|
-| SKY | Project Admin | `admin@kavach.local` |
-| SKY | Store Manager (one store) | `store@kavach.local` or `9000000001` |
-| SKY | Store Manager (two stores) | `store2@kavach.local` or `9000000002` |
-| GRN | Project Admin | `admin2@kavach.local` |
-| GRN | Store Manager | `store.grn@kavach.local` |
+| Project | Role                       | Login (e-mail or mobile)              |
+| ------- | -------------------------- | ------------------------------------- |
+| SKY     | Project Admin              | `admin@kavach.local`                  |
+| SKY     | Store Manager (one store)  | `store@kavach.local` or `9000000001`  |
+| SKY     | Store Manager (two stores) | `store2@kavach.local` or `9000000002` |
+| GRN     | Project Admin              | `admin2@kavach.local`                 |
+| GRN     | Store Manager              | `store.grn@kavach.local`              |
 
 Try the same task as an admin and as a Store Manager to see the difference in what each role can do.
 
@@ -428,30 +439,30 @@ pnpm --filter @kavach/mobile exec jest src/App.test.tsx
 
 ## 8. Other useful commands
 
-| Command | What it does |
-|---|---|
-| `pnpm project:create -- --code ABC --name "My Site" --admin-name "Name" --admin-email me@example.com --admin-password "Initial#123"` | Creates a new project and its first admin (who must change the password at first login) |
-| `pnpm user:reset-password -- --login me@example.com --password "New#Pass123"` | Resets the password of a user who works on several projects |
-| `pnpm user:add-member -- --login me@example.com --project ABC --role STORE_MANAGER --stores MAIN` | Adds an existing user to another project |
-| `pnpm ops:check` | Health check: stock balances against the ledger, stuck documents (run `pnpm build` first) |
-| `pnpm db:migrate` | Creates a new migration after you change `packages/db/prisma/schema.prisma` |
-| `pnpm --filter @kavach/db studio` | Opens Prisma Studio to browse the database |
-| `pnpm --filter @kavach/worker eval -- --provider fixture` | Runs the AI accuracy check offline on the sample documents |
-| `pnpm format` | Formats the code with Prettier |
+| Command                                                                                                                              | What it does                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `pnpm project:create -- --code ABC --name "My Site" --admin-name "Name" --admin-email me@example.com --admin-password "Initial#123"` | Creates a new project and its first admin (who must change the password at first login)   |
+| `pnpm user:reset-password -- --login me@example.com --password "New#Pass123"`                                                        | Resets the password of a user who works on several projects                               |
+| `pnpm user:add-member -- --login me@example.com --project ABC --role STORE_MANAGER --stores MAIN`                                    | Adds an existing user to another project                                                  |
+| `pnpm ops:check`                                                                                                                     | Health check: stock balances against the ledger, stuck documents (run `pnpm build` first) |
+| `pnpm db:migrate`                                                                                                                    | Creates a new migration after you change `packages/db/prisma/schema.prisma`               |
+| `pnpm --filter @kavach/db studio`                                                                                                    | Opens Prisma Studio to browse the database                                                |
+| `pnpm --filter @kavach/worker eval -- --provider fixture`                                                                            | Runs the AI accuracy check offline on the sample documents                                |
+| `pnpm format`                                                                                                                        | Formats the code with Prettier                                                            |
 
 ## 9. Troubleshooting
 
-| Problem | Fix |
-|---|---|
-| `pnpm install` says the Node version is not supported | You are not on Node 22. Run `nvm use 22` and try again. |
-| API stops with `JWT_SECRET must be set to at least 32 characters` | Set `JWT_SECRET` in `.env` (section 2.2). |
-| `Can't reach database server` | PostgreSQL is not running, or `DATABASE_URL` in `.env` has the wrong port or password. |
-| `The table ... does not exist` | Run `pnpm db:deploy`. |
-| Imports of `@kavach/shared` or `@kavach/db` fail | Run `pnpm build` once; those packages are used from their built output. |
-| Windows: `EPERM ... query_engine-windows.dll.node` during build or tests | An API or worker is still running and holds the Prisma file. Stop it (Ctrl + C) and run again. |
-| Uploaded invoice shows "AI reading is not set up" | Expected without an AI key. Set `AI_PROVIDER=fixture` to try the flow with the sample documents, or type the lines by hand. |
-| Login blocked: "Too many failed attempts" | Wait 15 minutes, or sign in from another computer. |
-| Port 3000 or 3001 already in use | Stop the other program, or change `API_PORT` in `.env` (and `NEXT_PUBLIC_API_URL` to match). |
+| Problem                                                                  | Fix                                                                                                                         |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install` says the Node version is not supported                    | You are not on Node 22. Run `nvm use 22` and try again.                                                                     |
+| API stops with `JWT_SECRET must be set to at least 32 characters`        | Set `JWT_SECRET` in `.env` (section 2.2).                                                                                   |
+| `Can't reach database server`                                            | PostgreSQL is not running, or `DATABASE_URL` in `.env` has the wrong port or password.                                      |
+| `The table ... does not exist`                                           | Run `pnpm db:deploy`.                                                                                                       |
+| Imports of `@kavach/shared` or `@kavach/db` fail                         | Run `pnpm build` once; those packages are used from their built output.                                                     |
+| Windows: `EPERM ... query_engine-windows.dll.node` during build or tests | An API or worker is still running and holds the Prisma file. Stop it (Ctrl + C) and run again.                              |
+| Uploaded invoice shows "AI reading is not set up"                        | Expected without an AI key. Set `AI_PROVIDER=fixture` to try the flow with the sample documents, or type the lines by hand. |
+| Login blocked: "Too many failed attempts"                                | Wait 15 minutes, or sign in from another computer.                                                                          |
+| Port 3000 or 3001 already in use                                         | Stop the other program, or change `API_PORT` in `.env` (and `NEXT_PUBLIC_API_URL` to match).                                |
 
 ## 10. Where to read more
 

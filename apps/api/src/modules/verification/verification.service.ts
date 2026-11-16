@@ -55,7 +55,10 @@ export class VerificationService {
     };
   }
 
-  async list(ctx: RequestContext, query: VerificationListQuery): Promise<Paginated<VerificationDto>> {
+  async list(
+    ctx: RequestContext,
+    query: VerificationListQuery,
+  ): Promise<Paginated<VerificationDto>> {
     if (query.storeId) {
       assertStoreAccess(ctx, query.storeId);
     }
@@ -145,7 +148,9 @@ export class VerificationService {
         ON CONFLICT (store_id, material_id) DO NOTHING
       `);
 
-      const [balance] = await tx.$queryRaw<{ available_qty: Decimal | string; last_transaction_seq: bigint | string | null }[]>`
+      const [balance] = await tx.$queryRaw<
+        { available_qty: Decimal | string; last_transaction_seq: bigint | string | null }[]
+      >`
         SELECT available_qty, last_transaction_seq
         FROM stock_balances
         WHERE store_id = ${input.storeId}::uuid AND material_id = ${input.materialId}::uuid
@@ -195,7 +200,11 @@ export class VerificationService {
     });
   }
 
-  async approve(ctx: RequestContext, id: string, input: ReviewVerificationInput): Promise<VerificationDto> {
+  async approve(
+    ctx: RequestContext,
+    id: string,
+    input: ReviewVerificationInput,
+  ): Promise<VerificationDto> {
     return this.prisma.db.$transaction(async (tx) => {
       const v = await tx.stockVerification.findFirst({
         where: { id, projectId: ctx.projectId },
@@ -333,7 +342,11 @@ export class VerificationService {
     });
   }
 
-  async reject(ctx: RequestContext, id: string, input: RejectVerificationInput): Promise<VerificationDto> {
+  async reject(
+    ctx: RequestContext,
+    id: string,
+    input: RejectVerificationInput,
+  ): Promise<VerificationDto> {
     return this.prisma.db.$transaction(async (tx) => {
       const v = await tx.stockVerification.findFirst({
         where: { id, projectId: ctx.projectId },

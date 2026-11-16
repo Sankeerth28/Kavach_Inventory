@@ -34,6 +34,7 @@ services:
       retries: 10
 
   minio:
+    profiles: ['s3']
     image: minio/minio:latest
     command: ['server', '/data', '--console-address', ':9001']
     environment:
@@ -52,6 +53,7 @@ services:
 
   # One-shot: creates the private documents bucket, then exits.
   minio-init:
+    profiles: ['s3']
     image: minio/mc:latest
     depends_on:
       minio:

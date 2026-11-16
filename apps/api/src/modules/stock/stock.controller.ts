@@ -41,4 +41,3 @@ export class StockController {
     return this.stock.getDetail(ctx, materialId);
   }
 }
-

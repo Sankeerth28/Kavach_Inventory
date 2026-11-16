@@ -12,23 +12,21 @@ const securityHeaders = [
   { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), payment=()' },
 ];
 
-/**
- * Optional: serve the API through this app at /backend, so web and API share one public address
- * (needed for the SameSite=strict refresh cookie when sharing via a tunnel or a free host).
- * Set at build time together with NEXT_PUBLIC_API_URL=/backend and the API's COOKIE_PATH=/backend/auth.
- */
-const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, '');
-
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
+  /**
+   * Optional same-origin proxy: with API_PROXY_TARGET set (e.g. https://kavach-api.onrender.com),
+   * the browser calls /kapi/... on the web app's own domain, so the SameSite=Strict refresh
+   * cookie works without a shared custom domain. Pair with NEXT_PUBLIC_API_URL=/kapi and
+   * COOKIE_PATH=/kapi/auth on the API.
+   */
   async rewrites() {
-    return apiProxyTarget
-      ? [{ source: '/backend/:path*', destination: `${apiProxyTarget}/:path*` }]
-      : [];
+    const target = process.env.API_PROXY_TARGET?.replace(/\/$/, '');
+    return target ? [{ source: '/kapi/:path*', destination: `${target}/:path*` }] : [];
   },
 };
 

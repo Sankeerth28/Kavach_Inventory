@@ -13,8 +13,12 @@ export const IdempotencyKey = createParamDecorator((_: unknown, host: ExecutionC
   }
   const parsed = IdempotencyKeySchema.safeParse(key);
   if (!parsed.success) {
-    throw new DomainError('VALIDATION_FAILED', 'Invalid Idempotency-Key format', 400, parsed.error.issues);
+    throw new DomainError(
+      'VALIDATION_FAILED',
+      'Invalid Idempotency-Key format',
+      400,
+      parsed.error.issues,
+    );
   }
   return parsed.data;
 });
-

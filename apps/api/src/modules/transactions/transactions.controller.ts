@@ -23,4 +23,3 @@ export class TransactionsController {
     return this.transactions.list(ctx, query);
   }
 }
-

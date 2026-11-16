@@ -1,16 +1,24 @@
 'use client';
 
-import type {
-  PostingDto,
-  QuickReceiveInput,
-  ReceiptInput,
-} from '@kavach/shared';
+import type { PostingDto, QuickReceiveInput, ReceiptInput } from '@kavach/shared';
 import { convert } from '@kavach/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { InvoiceInbox } from '@/components/invoice-inbox';
-import { Alert, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Table, Td } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Select,
+  Table,
+  Td,
+} from '@/components/ui';
 import { api, errorMessage, useSession } from '@/lib/session';
 import { useStore } from '@/lib/store-context';
 import { cn } from '@/lib/utils';
@@ -47,9 +55,7 @@ export default function MaterialInPage() {
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
 
   const defaultStoreId =
-    selectedStoreId !== 'ALL'
-      ? selectedStoreId
-      : authorizedStores[0]?.id ?? '';
+    selectedStoreId !== 'ALL' ? selectedStoreId : (authorizedStores[0]?.id ?? '');
 
   // ── Standard Receipt Form State ───────────────────────────────────────────
   const [storeId, setStoreId] = useState(defaultStoreId);
@@ -93,12 +99,14 @@ export default function MaterialInPage() {
   // Conversion map for real-time preview
   const conversionMap = useMemo(() => {
     const unitMap = new Map(units.map((u) => [u.id, { id: u.id, decimalPlaces: u.decimalPlaces }]));
-    const convRows = conversions.filter((c) => c.isActive).map((c) => ({
-      fromUnitId: c.fromUnitId,
-      toUnitId: c.toUnitId,
-      factor: c.factor,
-      materialId: c.materialId,
-    }));
+    const convRows = conversions
+      .filter((c) => c.isActive)
+      .map((c) => ({
+        fromUnitId: c.fromUnitId,
+        toUnitId: c.toUnitId,
+        factor: c.factor,
+        materialId: c.materialId,
+      }));
     return { units: unitMap, conversions: convRows };
   }, [units, conversions]);
 
@@ -262,7 +270,9 @@ export default function MaterialInPage() {
           title="Material In"
           description="Documents scanned by Store Managers, and the receipts posted from them."
         />
-        <Alert tone="info">Material is received by Store Managers. You can open every document and receipt.</Alert>
+        <Alert tone="info">
+          Material is received by Store Managers. You can open every document and receipt.
+        </Alert>
         <InvoiceInbox />
       </div>
     );
@@ -311,7 +321,9 @@ export default function MaterialInPage() {
           <Link href={`/material-in/receipts/${postedReceipt.id}?print=1`}>
             <Button variant="secondary">Download Receipt</Button>
           </Link>
-          <Button variant="secondary" onClick={resetForm}>Receive Another</Button>
+          <Button variant="secondary" onClick={resetForm}>
+            Receive Another
+          </Button>
           <Link href="/stock">
             <Button variant="secondary">View Current Stock</Button>
           </Link>
@@ -533,9 +545,7 @@ export default function MaterialInPage() {
                               min="0.0001"
                               placeholder="0.00"
                               value={line.acceptedQty}
-                              onChange={(e) =>
-                                updateLine(line.id, { acceptedQty: e.target.value })
-                              }
+                              onChange={(e) => updateLine(line.id, { acceptedQty: e.target.value })}
                               required
                             />
                           )}
@@ -935,7 +945,9 @@ export default function MaterialInPage() {
                       <Td>{i + 1}</Td>
                       <Td className="font-medium">{m?.name ?? '—'}</Td>
                       <Td className="tabular-nums font-semibold text-success">{l.acceptedQty}</Td>
-                      <Td className="tabular-nums font-semibold text-danger">{l.damagedQty || '0'}</Td>
+                      <Td className="tabular-nums font-semibold text-danger">
+                        {l.damagedQty || '0'}
+                      </Td>
                       <Td>{u?.code ?? '—'}</Td>
                     </tr>
                   );

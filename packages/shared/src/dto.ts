@@ -181,4 +181,3 @@ export interface DashboardSummaryDto {
   locationCount: number;
   memberCount: number | null;
 }
-

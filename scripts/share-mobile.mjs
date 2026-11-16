@@ -21,7 +21,7 @@ try {
   process.exit(1);
 }
 
-const apiUrl = `${publicUrl}/backend`;
+const apiUrl = `${publicUrl}/kapi`;
 console.log(`\nMobile app will talk to: ${apiUrl}\n`);
 
 const child = spawn('pnpm exec expo start --tunnel --clear', {

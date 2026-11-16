@@ -65,7 +65,8 @@ function ConfidenceForm({ value }: { value: ConfidenceThresholds }) {
   const [auto, setAuto] = useState(String(Math.round(value.auto * 100)));
   const [confirm, setConfirm] = useState(String(Math.round(value.confirm * 100)));
   const save = useMutation({
-    mutationFn: () => api.settings.setConfidence({ auto: Number(auto) / 100, confirm: Number(confirm) / 100 }),
+    mutationFn: () =>
+      api.settings.setConfidence({ auto: Number(auto) / 100, confirm: Number(confirm) / 100 }),
     onSuccess: (updated) => queryClient.setQueryData(['confidence'], updated),
   });
   return (
@@ -82,14 +83,42 @@ function ConfidenceForm({ value }: { value: ConfidenceThresholds }) {
           save.mutate();
         }}
       >
-        <Field label="High confidence from (%)" hint="At or above: the match is pre-selected and needs no tick.">
-          {(id) => <Input id={id} type="number" min={50} max={100} value={auto} onChange={(e) => setAuto(e.target.value)} required />}
+        <Field
+          label="High confidence from (%)"
+          hint="At or above: the match is pre-selected and needs no tick."
+        >
+          {(id) => (
+            <Input
+              id={id}
+              type="number"
+              min={50}
+              max={100}
+              value={auto}
+              onChange={(e) => setAuto(e.target.value)}
+              required
+            />
+          )}
         </Field>
-        <Field label="Needs confirmation from (%)" hint="Between the two: suggested, and the user must tick the line. Below: the user chooses.">
-          {(id) => <Input id={id} type="number" min={10} max={100} value={confirm} onChange={(e) => setConfirm(e.target.value)} required />}
+        <Field
+          label="Needs confirmation from (%)"
+          hint="Between the two: suggested, and the user must tick the line. Below: the user chooses."
+        >
+          {(id) => (
+            <Input
+              id={id}
+              type="number"
+              min={10}
+              max={100}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+            />
+          )}
         </Field>
         {save.error && <Alert>{errorMessage(save.error)}</Alert>}
-        {save.isSuccess && <Alert tone="success">Saved. Applies to documents read from now on.</Alert>}
+        {save.isSuccess && (
+          <Alert tone="success">Saved. Applies to documents read from now on.</Alert>
+        )}
         <div>
           <Button type="submit" disabled={save.isPending}>
             {save.isPending ? 'Saving…' : 'Save'}
@@ -109,7 +138,12 @@ export default function SettingsPage() {
       {project.error && <Alert>{errorMessage(project.error)}</Alert>}
       {project.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
       {project.data && <ProjectForm key={project.data.id} project={project.data} />}
-      {confidence.data && <ConfidenceForm key={`${confidence.data.auto}-${confidence.data.confirm}`} value={confidence.data} />}
+      {confidence.data && (
+        <ConfidenceForm
+          key={`${confidence.data.auto}-${confidence.data.confirm}`}
+          value={confidence.data}
+        />
+      )}
     </>
   );
 }

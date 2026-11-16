@@ -89,7 +89,10 @@ export const IdempotencyKeySchema = z
 
 // ── Contractors (DECISIONS Q31) ──────────────────────────────────────────────
 
-const optionalPhone = z.preprocess((v) => (v === '' || v === null ? undefined : v), PhoneSchema.optional());
+const optionalPhone = z.preprocess(
+  (v) => (v === '' || v === null ? undefined : v),
+  PhoneSchema.optional(),
+);
 
 export const CreateContractorSchema = z.object({
   name: z.string().trim().min(2, 'Enter a name').max(120),
@@ -404,7 +407,13 @@ export interface StockRowDto {
 }
 
 export interface StockDetailDto extends StockRowDto {
-  stores: { storeId: string; storeName: string; availableQty: string; damagedQty: string; scrapQty: string }[];
+  stores: {
+    storeId: string;
+    storeName: string;
+    availableQty: string;
+    damagedQty: string;
+    scrapQty: string;
+  }[];
   /** PRD §16.4, available stock only, reversals netted into the type they reverse. */
   totals: MovementTotals;
   recent: TransactionDto[];
@@ -482,7 +491,11 @@ export interface DashboardDto {
   /** Number of ledger entries per day and type over the selected period. */
   movement: { date: string; in: number; out: number; returns: number; adjustments: number }[];
   /** Operational view: materials issued most often in the last 30 days. */
-  frequentMaterials: { materialId: string; materialCode: string; materialName: string; issues: number }[];
+  frequentMaterials: {
+    materialId: string;
+    materialCode: string;
+    materialName: string;
+    issues: number;
+  }[];
   pendingVerifications: number;
 }
-

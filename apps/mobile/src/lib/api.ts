@@ -1,5 +1,6 @@
 import { ApiError, createApiClient } from '@kavach/api-client';
 import * as SecureStore from 'expo-secure-store';
+import { NativeModules, Platform } from 'react-native';
 
 const REFRESH_KEY = 'kavach.refreshToken';
 
@@ -14,12 +15,34 @@ export function onSessionExpired(handler: (() => void) | null): void {
   onExpired = handler;
 }
 
+export function resolveBaseUrl(): string {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl;
+  }
+  if (Platform.OS !== 'web') {
+    const scriptUrl = (NativeModules.SourceCode as { scriptURL?: string } | undefined)?.scriptURL;
+    if (scriptUrl) {
+      const match = scriptUrl.match(/https?:\/\/([^/:]+)/);
+      if (match && match[1] && match[1] !== 'localhost' && match[1] !== '127.0.0.1') {
+        const port = envUrl ? (envUrl.match(/:(\d+)/)?.[1] ?? '3001') : '3001';
+        return `http://${match[1]}:${port}`;
+      }
+    }
+    if (Platform.OS === 'android') {
+      const port = envUrl ? (envUrl.match(/:(\d+)/)?.[1] ?? '3001') : '3001';
+      return `http://10.0.2.2:${port}`;
+    }
+  }
+  return envUrl ?? 'http://localhost:3001';
+}
+
 /**
  * One API client for the app. The access token stays in memory; the refresh token is kept in the
  * device keystore (SecureStore), never in plain storage (ARCHITECTURE §8).
  */
 export const api = createApiClient({
-  baseUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001',
+  baseUrl: resolveBaseUrl(),
   mode: 'mobile',
   getProjectId: () => currentProjectId,
   tokenStore: {

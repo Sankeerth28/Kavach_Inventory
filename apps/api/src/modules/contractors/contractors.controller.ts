@@ -54,4 +54,3 @@ export class ContractorsController {
     return this.contractors.merge(ctx, id, body);
   }
 }
-

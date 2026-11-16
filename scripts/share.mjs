@@ -2,7 +2,7 @@
 /**
  * pnpm share: run KAVACH on this computer and give it a public https:// link (prototype demos).
  *
- * 1. Builds the apps with the API served through the web app at /backend (one address, so the
+ * 1. Builds the apps with the API served through the web app at /kapi (one address, so the
  *    login cookie works).
  * 2. Opens a free Cloudflare quick tunnel to the web app (no account needed).
  * 3. Starts the API, the worker and the web app, and prints the link.
@@ -102,7 +102,7 @@ if (dbMatch && !(await canConnect(dbMatch[1], Number(dbMatch[2])))) {
 }
 
 // ── 2. Build in "one address" mode ───────────────────────────────────────────────────────────
-const buildEnv = { NEXT_PUBLIC_API_URL: '/backend', API_PROXY_TARGET: 'http://localhost:3001' };
+const buildEnv = { NEXT_PUBLIC_API_URL: '/kapi', API_PROXY_TARGET: 'http://localhost:3001' };
 say('Building the apps (1–3 minutes)…');
 const build = spawnSync('pnpm build', {
   cwd: root,
@@ -142,7 +142,7 @@ writeFileSync(path.join(root, '.local', 'share-url.txt'), publicUrl);
 const runEnv = {
   ...buildEnv,
   WEB_ORIGIN: `${publicUrl},http://localhost:3000`,
-  COOKIE_PATH: '/backend/auth',
+  COOKIE_PATH: '/kapi/auth',
   COOKIE_SECURE: 'true',
 };
 run('api', 'pnpm --filter @kavach/api start', runEnv);

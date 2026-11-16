@@ -1,14 +1,23 @@
 'use client';
 
-import type {
-  AdjustmentInput,
-  StockBucket,
-  TransactionDto,
-} from '@kavach/shared';
+import type { AdjustmentInput, StockBucket, TransactionDto } from '@kavach/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { use, useState } from 'react';
-import { Alert, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Table, Td, Textarea } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Select,
+  Table,
+  Td,
+  Textarea,
+} from '@/components/ui';
 import { api, errorMessage, useSession } from '@/lib/session';
 
 type AllowedAdjustmentKind = 'MANUAL_CORRECTION' | 'DISPOSITION_WRITE_OFF' | 'DISPOSITION_RESTORE';
@@ -139,7 +148,9 @@ export default function StockDetailPage({ params }: { params: Promise<{ id: stri
               {availableQty}{' '}
               <span className="text-sm font-normal text-muted-foreground">{unitCode}</span>
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">Available for immediate issue to site</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Available for immediate issue to site
+            </p>
           </Card>
 
           <Card className="border-warning/40 bg-warning/5 p-5">
@@ -192,9 +203,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ id: stri
             </div>
             <div className="p-2 rounded bg-muted/30">
               <p className="text-[10px] text-muted-foreground uppercase">+ Reusable Returns</p>
-              <p className="mt-1 font-mono font-semibold text-success">
-                +{totals.reusableReturns}
-              </p>
+              <p className="mt-1 font-mono font-semibold text-success">+{totals.reusableReturns}</p>
             </div>
             <div className="p-2 rounded bg-muted/30">
               <p className="text-[10px] text-muted-foreground uppercase">− Issues Out</p>
@@ -249,7 +258,18 @@ export default function StockDetailPage({ params }: { params: Promise<{ id: stri
             Full Ledger for this SKU →
           </Link>
         </div>
-        <Table head={['Txn #', 'Posting Ref', 'Type', 'Bucket', 'Quantity', 'Balance After', 'Store', 'Date']}>
+        <Table
+          head={[
+            'Txn #',
+            'Posting Ref',
+            'Type',
+            'Bucket',
+            'Quantity',
+            'Balance After',
+            'Store',
+            'Date',
+          ]}
+        >
           {recent.map((t: TransactionDto) => (
             <tr key={t.id} className="hover:bg-muted/40">
               <Td className="font-mono text-xs">{t.txnNo}</Td>
@@ -292,10 +312,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ id: stri
 
       {/* ── Adjustment Modal (Admin Only, Q23) ────────────────────────────── */}
       {adjustModalOpen && (
-        <Modal
-          title={`Adjust Stock — ${materialCode}`}
-          onClose={() => setAdjustModalOpen(false)}
-        >
+        <Modal title={`Adjust Stock — ${materialCode}`} onClose={() => setAdjustModalOpen(false)}>
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
               Direct ledger adjustment. Available only to Project Admins. Every adjustment writes a
